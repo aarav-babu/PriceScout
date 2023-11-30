@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Product Details</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='/css/price.css') }}">
+
+</head>
+
+<body>
+    {% include '/navigbar/navbar.html' %}
+    <!-- <p>Time Left: <span id="timer">0m 10s</span></p> -->
+    <div class="page">
+        <div class="content product-details">
+            <h1>Product Details</h1>
+            <p><strong>Product Category: </strong><span style="text-transform: capitalize;">{{ Type }}</span></p>
+            <p><strong>Name: </strong>{{ Name }}</p>
+            <p><strong>Price: </strong>{{ Price }}</p>
+            <div class="product-image">
+                <img src="{{ img_data }}" alt="Picture Icon">
+            </div>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='/script/price.js') }}"></script>
+</body>
+
+</html>

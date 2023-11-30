@@ -1,0 +1,109 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Arial', sans-serif;
+    background-color: #f0f0f0;
+    text-align: center;
+}
+
+.page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+.container {
+    width: 70%;
+    max-width: 600px;
+    padding: 20px;
+    margin-top: 20px;
+    border: 2px solid #2ecc71;
+    border-radius: 5px;
+    background-color: #fff;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.container:hover {
+    transform: scale(1.01);
+}
+
+.form-group {
+    text-align: left;
+    text-indent: 5%;
+    padding: 20px;
+    background-color: #fff; /* Background color */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Add a subtle box shadow */
+}
+
+.form-group label {
+    display: inline-block;
+    text-align: left;
+    text-indent: -20%;
+    width: 120px; /* Adjust the width as needed */
+    color: #333; /* Label text color */
+}
+
+.form-group input,
+.form-group select {
+    width: 60%; /* Reduce the size of the input box */
+    padding: 8px; /* Adjust padding as needed */
+    margin-top: 5px;
+    margin-left: 80px;
+    
+    border: none; 
+    border-bottom: 1px solid #6e6c6c; 
+    transition: background-color 0.3s ease;
+}
+
+.form-group textarea {
+    width: 60%; /* Reduce the size of the input box */
+    padding: 8px; /* Adjust padding as needed */
+    margin-top: 5px;
+    margin-left: 30px;
+    border: none; 
+    border-bottom: 1px solid #6e6c6c; 
+    transition: background-color 0.3s ease;
+}
+
+.form-group input {
+    max-width: 250px;
+    text-align: center;
+    padding-left: 20px;
+}
+
+.form-group select {
+    max-width: 265px;
+}
+
+.carformcontainer,
+.laptopformcontainer,
+.mobileformcontainer {
+    position: relative;
+    overflow: hidden;
+    z-index: 0;
+}
+
+#bg-video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: brightness(0.7); /* Adjust brightness as needed */
+    z-index: -1; /* Set a negative z-index to ensure it's behind the content */
+    
+    animation: slowDown 5s linear infinite 1.5x;
+}
+
+@keyframes slowDown {
+    from {
+        transform: scale(1);
+    }
+    to {
+        transform: scale(1.5); /* 100 / 60 = 1.67 for 60% speed */
+    }
+}

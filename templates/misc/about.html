@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>About Us</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='/css/misc/about.css') }}">
+</head>
+
+<body>
+    {% if user_is_signed_in %}
+    {% include '/navigbar/navbar.html' %}
+    {% else %}
+    {% include '/navigbar/nosessionbar.html' %}
+    {% endif %}
+
+    <div class="page">
+        <div class="container">
+        <h2>Welcome to PriceScout: Your Valuation Companion</h2>
+
+        <p>At PriceScout, we're on a mission to revolutionize the device valuation experience. Our platform is designed
+            to provide quick results and unmatched convenience in estimating the value of your mobile phones, laptops,
+            and vehicles. Here's a glimpse of what sets us apart:</p>
+        <br>
+        <br>
+        <br>
+        <h3>Mission: Redefining Device Valuations</h3>
+        <p>Our mission is to redefine how individuals and businesses perceive device valuations. We believe in
+            leveraging technology to empower you with accurate, transparent, and timely estimates for your valuable
+            devices.</p>
+
+        <h3>Cutting-Edge Technology at Your Service</h3>
+        <p>We pride ourselves on leveraging cutting-edge technologies to deliver quick and precise valuations. Our
+            platform combines the power of web scraping and machine learning to ensure a comprehensive assessment of
+            your device.</p>
+
+        <h3>Web Scraping for Real-Time Data</h3>
+        <p>We use web scraping to gather real-time data from various online sources. This dynamic approach keeps us 
+            informed about market trends, product availability, and other factors influencing your device's value.</p>
+            
+        <h3>Machine Learning for Precision</h3>
+        <p>Our machine learning algorithms form the core of our valuation system. Analyzing diverse parameters—from device 
+            specifications to market demand—enables us to generate quick and reliable estimates.</p>
+            
+        <h3>Quick Results, Unmatched Convenience</h3>
+        <p>We understand the value of your time. PriceScout is committed to delivering quick results without compromising accuracy.
+            The convenience of our platform ensures a hassle-free experience from submission to valuation.</p>
+            
+        <h3>Transparency in Valuation</h3>
+        <p>We believe in transparency throughout the valuation process. Our combination of web scraping and machine learning 
+            ensures a personalized and accurate estimate for each unique device.</p>
+            
+        <h3>Continuous Improvement</h3>
+        <p>Dedicated to excellence, we continuously refine and enhance our algorithms. Staying at the forefront of technological 
+            advancements, we provide you with the best valuation experience possible.</p>
+            
+        <h3>Your Trust, Our Priority</h3>
+        <p>Your trust is paramount. We uphold the highest standards of security and privacy in handling your data. If you have 
+            questions about our technologies or processes, we're here to help.</p>
+            
+        <h3>Join the Future of Valuations with PriceScout</h3>
+        <p>Embark on a journey with PriceScout, where technology meets precision. Experience the innovation that sets us apart in
+            the world of device valuation. Join us today and discover the future of quick, precise, and convenient valuations!</p>
+        
+        </div>
+    </div>
+</body>
+
+</html>

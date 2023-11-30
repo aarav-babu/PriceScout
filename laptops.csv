@@ -1,0 +1,4 @@
+post_id,email,brandlap,model,processor,ram_size,memory_type,memory_size,display_size,refresh_rate,battery,laptop_type,description
+1,siddhantjverma@gmail.com,Apple,Macbook,m1,16,sdd,1,15inches,120hz,100wh ,gaming,Greenline in the screen 
+2,siddhantjverma@gmail.com,Lenovo,Legion 5,i5 10th Gen,8,sdd,256,15.4inches,120hz,66wh,gaming,Good laptop
+1,siddhantjverma@gmail.com,Apple,Macbook,m1,16.0,sdd,1.0,15.4,120,66,not-gaming,Good laptop

@@ -1,0 +1,72 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Arial', sans-serif;
+    background-color: #f0f0f0;
+    text-align: center;
+}
+.landing {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    margin-left: 50px;
+    margin-right: 50px;
+    border-radius: 25px;
+    height: 50vh;
+    color: #eed7d7;
+    background-color: #143851; /* Matching the theme color */
+}
+h1{
+    font-size: 48px;
+    font-family: Copperplate,fantasy, sans-serif;
+}
+
+h3{
+    font-size: 28px;
+    font-family: Copperplate, fantasy, serif;
+}
+#landingpara{
+    font-size: 20px;
+    font-family: 'Courier New', Courier, monospace;
+}
+.container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    margin: auto;
+    max-width: 800px;
+}
+
+
+.price-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 80px;
+    margin-left: 5px;
+}
+
+.box {
+    flex: 1;
+    margin: 10px;
+    padding: 20px;
+    margin-top: -60px;
+    border: 1px solid #12476b;
+    border-radius: 25px;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    background-color: #fff;
+}
+
+.box:hover {
+    background-color: #949494;
+}
+
+a {
+    text-decoration: none;
+    color: #000;
+}

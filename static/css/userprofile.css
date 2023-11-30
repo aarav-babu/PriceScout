@@ -1,0 +1,67 @@
+/* Center align the form elements */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+    text-align: center;
+}
+
+label,
+input {
+    display: block;
+    margin: 0 auto;
+}
+
+.user_box {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-top: 5px;
+    margin-left: 300px;
+    margin-right: 300px;
+    padding: 20px;
+    border-radius: 10px;
+    background-color: #848484;
+    text-align: left;
+}
+
+.profile_picture {
+    width: 100px;
+    margin-right: 100px;
+    margin-left: 50px;
+}
+
+.loaded_image {
+    max-width: 150%;
+    border-radius: 50%;
+}
+
+.user_posts {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    flex-wrap: wrap;
+    /* Enable wrapping for user posts */
+}
+
+.box {
+    flex: 0 0 calc(25% - 20px);
+    /* Set a fixed width for each box (4 boxes per row with some spacing) */
+    height: 250px;
+    /* Set a fixed height for all boxes */
+    margin: 10px;
+    padding: 20px;
+    border: 1px solid #c2b5b5;
+    border-radius: 10px;
+    text-align: left;
+    /* Align text in the box to the left */
+    cursor: pointer;
+}
+
+.description {
+    margin-top: 10px;
+    /* Add some top margin to separate Description from the content */
+}
+

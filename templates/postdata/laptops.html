@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Laptops Page</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='/css/postdata.css') }}">
+</head>
+
+<body>
+    <!-- Form for Laptop Details -->
+    {% include '/navigbar/navbar.html' %}
+    <div class="laptopformcontainer">
+        <video autoplay muted loop id="bg-video">
+            <source src="{{ url_for('static', filename='/videos/laptops_bg.mp4') }}" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+        <div class="page">
+            <div class="container">
+                <h2>Laptop Details</h2>
+                <form method="post" onsubmit="localStorage.setItem('laptopform', 'true');">
+                    <div class="form-group">
+                        <label for="brand">Brand:</label>
+                        <input type="text" name="brand" id="brand" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="model">Model:</label>
+                        <input type="text" name="model" id="model" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="processor">Processor:</label>
+                        <input type="text" name="processor" id="processor" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="ram-size">RAM Size:</label>
+                        <input type="text" name="ram-size" id="ram-size" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="memory-type">Memory Type:</label>
+                        <select name="memory-type" id="memory-type" required>
+                            <option value="sdd">SSD</option>
+                            <option value="hdd">HDD</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="memory-size">Memory Size:</label>
+                        <input type="text" name="memory-size" id="memory-size" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="display-size">Display Size:</label>
+                        <input type="text" name="display-size" id="display-size" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="refresh-rate">Refresh Rate:</label>
+                        <input type="text" name="refresh-rate" id="refresh-rate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="battery">Battery:</label>
+                        <input type="text" name="battery" id="battery" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="laptop-type">Laptop Type:</label>
+                        <select name="laptop-type" id="laptop-type" required>
+                            <option value="gaming">Gaming</option>
+                            <option value="not-gaming">Not Gaming</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="description">Description:</label>
+                        <textarea name="description" id="description" rows="5" required></textarea>
+                    </div>
+                    <button type="submit">Submit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

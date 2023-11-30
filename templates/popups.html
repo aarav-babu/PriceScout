@@ -1,0 +1,29 @@
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul class="flash-messages">
+      {% for message, category in messages %}
+        <li class="{{ category }}">{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+
+
+<style>
+    .success {
+        background-color: #4CAF50;
+        color: white;
+    }
+
+    .error {
+        background-color: #F44336;
+        color: white;
+    }
+
+    .info {
+        background-color: #2196F3;
+        color: white;
+    }
+
+    /* Add styles for other message categories if needed */
+</style>

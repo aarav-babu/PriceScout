@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Mobile Phones Page</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='/css/postdata.css') }}">
+</head>
+
+<body>
+    <!-- Form for Mobile Phone Details -->
+    {% include '/navigbar/navbar.html' %}
+    <div class="mobileformcontainer">
+        <video autoplay muted loop id="bg-video">
+            <source src="{{ url_for('static', filename='/videos/mobiles_bg.mp4') }}" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+        <div class="page">
+            <div class="container">
+                <h2>Mobile Phone Details</h2>
+                <form method="post" onsubmit="localStorage.setItem('mobileform', 'true');">
+                    <div class="form-group">
+                        <label for="brand">Brand:</label>
+                        <input type="text" name="brand" id="brand" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="model-name">Model Name:</label>
+                        <input type="text" name="model-name" id="model-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="sim-slots">No of SIM Slots:</label>
+                        <input type="number" name="sim-slots" id="sim-slots" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="processor">Processor:</label>
+                        <input type="text" name="processor" id="processor" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="ram">RAM:</label>
+                        <input type="text" name="ram" id="ram" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="storage-size">Storage Size:</label>
+                        <input type="text" name="storage-size" id="storage-size" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="battery-size">Battery Size:</label>
+                        <input type="text" name="battery-size" id="battery-size" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="display">Display:</label>
+                        <input type="text" name="display" id="display" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="camera">Camera:</label>
+                        <input type="text" name="camera" id="camera" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="description">Description:</label>
+                        <textarea name="description" id="description" rows="5" required></textarea>
+                    </div>
+                    <button type="submit">Submit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

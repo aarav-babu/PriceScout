@@ -1,0 +1,54 @@
+.navbar {
+  background-color: #05141e;
+  color: #fff;
+  padding: 10px;
+  display: inline-block;
+  justify-content: space-between;
+}
+
+.navbar {
+  max-height: 20px;
+}
+
+.nav-links {
+  list-style: none;
+  display: flex;
+}
+
+.nav-links li {
+  margin-right: 20px;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: #fff;
+}
+
+.dropdown {
+  position: relative;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: #12476b;
+  z-index: 3;
+  /* Matching the theme color */
+}
+
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+
+.user-menu {
+  display: flex;
+  align-items: center;
+}
+
+.user-menu a {
+  text-decoration: none;
+  color: #fff;
+  margin-left: 10px;
+}

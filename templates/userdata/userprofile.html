@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>User Profile</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='/css/userprofile.css') }}">
+</head>
+
+<body>
+    {% include '/navigbar/navbar.html' %}
+    <div class="user_box">
+        <div class='profile_picture'>
+            <img src="{{ url_for('static', filename='images/pfp.jpg') }}" alt="Description of the image"
+                class="loaded_image">
+        </div>
+        <div class="user_info">
+            <p><strong>Name:</strong> {{ name }}</p>
+            <p><strong>Username:</strong> {{ username }}</p>
+            <p><strong>Email:</strong> {{ email }}</p>
+            <p><strong>Phone No:</strong> {{ number }}</p>
+            <p><strong>Password:</strong> {{ password }}</p>
+        </div>
+    </div>
+    <div class='user_posts'>
+        {% for item in items %}
+        <div class='box'>
+            <p><strong>Type: </strong><span style="text-transform: capitalize;">{{ item.2 }}</span></p>
+            <p><strong>Brand: </strong>{{ item.3 }}</p>
+            <p><strong>Model: </strong>{{ item.4 }}</p>
+            <p><strong>Price: </strong>₹ {{ item.6 }} /- </p>
+            <p><strong>Description: </strong></p>
+            <div class="description">{{ item.5 }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    <script src="{{ url_for('static', filename='/script/userprofile.js') }}"></script>
+</body>
+
+</html>

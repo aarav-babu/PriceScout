@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Vehicle Details Page</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='/css/postdata.css') }}">
+</head>
+
+<body>
+    {% include '/navigbar/navbar.html' %}
+    <div class="carformcontainer">
+        <video autoplay muted loop id="bg-video">
+            <source src="{{ url_for('static', filename='/videos/vehicle_bg.mp4') }}" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+        <div class="page">
+            <div class="container">
+                <h2>Vehicle Details</h2>
+                <form method="post" onsubmit="localStorage.setItem('vehicleform', 'true');">
+                    <div class="form-group">
+                        <label for="vehicle-type">Vehicle Type:</label>
+                        <select name="vehicle-type" id="vehicle-type" required>
+                            <option value="two-wheeler">Two Wheeler</option>
+                            <option value="four-wheeler">Four Wheeler</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="brand">Brand:</label>
+                        <input type="text" name="brand" id="brand" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="name-model">Name/Model:</label>
+                        <input type="text" name="name-model" id="name-model" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="model-year">Model Year:</label>
+                        <input type="number" name="model-year" id="model-year" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="kilometers-driven">Kilometers Driven:</label>
+                        <input type="number" name="kilometers-driven" id="kilometers-driven" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="fuel-type">Fuel Type:</label>
+                        <select name="fuel-type" id="fuel-type" required>
+                            <option value="petrol">Petrol</option>
+                            <option value="diesel">Diesel</option>
+                            <option value="cng">CNG</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="transmission-type">Transmission Type:</label>
+                        <select name="transmission-type" id="transmission-type" required>
+                            <option value="manual">Manual</option>
+                            <option value="automatic">Automatic</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="mileage">Mileage:</label>
+                        <input type="number" name="mileage" id="mileage" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="owner-type">Owner Type:</label>
+                        <input type="text" name="owner-type" id="owner-type" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="engine-capacity">Engine Capacity:</label>
+                        <input type="text" name="engine-capacity" id="engine-capacity" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="power">Power:</label>
+                        <input type="text" name="power" id="power" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="seats">Number of Seats:</label>
+                        <input type="number" name="seats" id="seats" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="color">Color:</label>
+                        <input type="text" name="color" id="color" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="location">Location:</label>
+                        <input type="text" name = "location" id="location" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="description">Description:</label>
+                        <textarea name="description" id="description" rows="5" required></textarea>
+                    </div>
+                    <button type="submit">Submit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
