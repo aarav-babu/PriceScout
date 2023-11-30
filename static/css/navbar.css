@@ -1,0 +1,66 @@
+.navbar {
+    background-color: #05141e;
+    color: #fff;
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    z-index: 2;
+}
+
+.navbar .logo {
+    color: #fff;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 24px;
+}
+
+.nav-links {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    margin-right: 20px; /* Adjust the negative margin to center the text more accurately */
+}
+
+.nav-links li {
+    margin-right: 20px;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: #fff;
+}
+
+.dropdown {
+    position: relative;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: rgba(20, 61, 88, 0.7); /* Use rgba for transparency */
+    padding: 10px;
+    border-radius: 5px; /* Add border-radius for rounded corners */
+    z-index: 3;
+}
+
+.dropdown-content a {
+    display: block;
+    padding: 5px 0;
+}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+.user-menu {
+    display: flex;
+    align-items: center;
+}
+
+.user-menu a {
+    text-decoration: none;
+    color: #fff;
+    margin-left: 10px;
+}

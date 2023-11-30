@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Landing Page</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='/css/index.css') }}">
+  {% if alert_message %}
+    <script>
+        alert('Please enter data to view a price. To view already retrieved price, go to Userprofile');
+    </script>
+  {% endif %}
+  <script>
+    // Check if the user is loggedin
+    if (localStorage.getItem('loggedin') === 'true') {
+      // Display the alert
+      alert('Login Successful. Going to homepage');
+      localStorage.removeItem('loggedin');
+    } else if (localStorage.getItem('mobileform') === 'true') {
+      // Display the alert
+      alert('Mobile data submitted.');
+      localStorage.removeItem('mobileform')
+    } else if (localStorage.getItem('laptopform') === 'true') {
+      // Display the alert
+      alert('Laptop data submitted.');
+      localStorage.removeItem('laptopform')
+    } else if (localStorage.getItem('vehicleform') === 'true') {
+      // Display the alert
+      alert('Vehicle data submitted.');
+      localStorage.removeItem('vehicleform')
+    }
+  </script>
+</head>
+
+<body>
+  {% include '/navigbar/navbar.html' %}
+  <div class="landing">
+    <h1>PriceScout</h1>
+        <h3>The one-stop solution to quickly and accurately estimate the value of second hand items</h3>
+        <p id = 'landingpara'>Our platform offers a seamless valuation experience for mobile phones, laptops, and vehicles. <br>Share your device details, and our system will provide an estimated value based on key factors.<br> Explore the features, submit your items, and enjoy the convenience of swift valuations!</p>
+  </div>
+  <div class="container">
+    <a href="/postdata/cars">
+      <div class="box">
+        <h2>Cars</h2>
+        <p>Input your vehicle data</p>
+      </div>
+    </a>
+
+    <a href="/postdata/mobiles">
+      <div class="box">
+        <h2>Mobile</h2>
+        <p>Input your mobile phone data</p>
+      </div>
+    </a>
+
+    <a href="/postdata/laptops">
+      <div class="box">
+        <h2>Laptops</h2>
+        <p>Input your laptop data</p>
+      </div>
+    </a>
+  </div>
+  <div class="price-container">
+    <a href="/postdata/price">
+      <div class="box">
+        <h2>Price</h2>
+        <p>Start searching for your latest post</p>
+      </div>
+    </a>
+  </div>
+</body>
+
+</html>

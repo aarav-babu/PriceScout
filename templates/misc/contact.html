@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Contact Us</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='/css/misc/contact.css') }}">
+</head>
+
+<body>
+    {% if user_is_signed_in %}
+    {% include '/navigbar/navbar.html' %}
+    {% else %}
+    {% include '/navigbar/nosessionbar.html' %}
+    {% endif %}
+    <div class="contactcont">
+        <div class="page">
+            <div class="container">
+                <div class="content">
+                    <div class="left-side">
+                        <div class="address details">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <div class="topic">Address</div>
+                            <div class="text-one">PES University</div>
+                            <div class="text-two">Electronic City</div>
+                        </div>
+                        <div class="phone details">
+                            <i class="fas fa-phone-alt"></i>
+                            <div class="topic">Phone</div>
+                            <div class="text-one">+91 81473 92935</div>
+                        </div>
+                        <div class="email details">
+                            <i class="fas fa-envelope"></i>
+                            <div class="topic">Email</div>
+                            <div class="text-one">pricescout@gmail.com</div>
+                            <div class="text-two">help.pricescout@gmail.com</div>
+                        </div>
+                    </div>
+                    <div class="right-side">
+                        <div class="topic-text">Send us a message</div>
+                        <p>If you have any queries, concerns, or encounter any issues, please don't hesitate to contact us. We're here to assist you
+                            and ensure a smooth experience with our valuation services. Your satisfaction is our priority!</p>
+
+                        <form action="#">
+                            <div class="input-box">
+                                <input type="text" placeholder="Enter your name">
+                            </div>
+                            <div class="input-box">
+                                <input type="text" placeholder="Enter your email">
+                            </div>
+                            <div class="input-box message-box">
+
+                            </div>
+                            <div class="button">
+                                <input type="button" value="Send Now">
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

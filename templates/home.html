@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capstone</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='/css/home.css') }}">
+    <script>
+        // Check if the user is registered
+        if (localStorage.getItem('loggedout') === 'true') {
+            // Display the alert
+            alert('User logged out.');
+            // Clear the registered flag
+            localStorage.removeItem('loggedout');
+        }
+    </script>
+</head>
+
+<body>
+    {% include '/navigbar/nosessionbar.html' %}
+    <div class="landing">
+        <h1>PriceScout</h1>
+        <h3>The one-stop solution to quickly and accurately estimate the value of second hand items</h3>
+        <p id = 'landingpara'>Our platform offers a seamless valuation experience for mobile phones, laptops, and vehicles. Share your device details, and our system will provide an estimated value based on key factors. Explore the features, submit your items, and enjoy the convenience of swift valuations!</p>
+    </div>
+    <!-- Container for Three Boxes -->
+    <div class="container">
+        <!-- Box for Cars -->
+        <div class="box" onmouseover="popCar(this)" onclick="popCar(this)">
+            <h2>Cars</h2>
+            <p></p>
+        </div>
+
+        <!-- Box for Vehicles -->
+        <div class="box" onmouseover="popLaptop(this)" onclick="popLaptop(this)">
+            <h2>Laptops</h2>
+            <p></p>
+        </div>
+
+        <!-- Box for Mobiles -->
+        <div class="box" onmouseover="popMobiles(this)" onclick="popMobiles(this)">
+            <h2>Mobiles</h2>
+            <p></p>
+        </div>
+
+        <!-- Box for Other -->
+        <div class="box" onmouseover="popOther(this)" onclick="popOther(this)">
+            <h2>Other</h2>
+            <p></p>
+        </div>
+
+        <script src="{{ url_for('static', filename='/script/home.js') }}"></script>
+</body>
+
+</html>

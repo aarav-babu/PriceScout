@@ -1,0 +1,35 @@
+post_id,user_email,brand,model,location,vehicle_type,model_year,color,km_driven,mileage,fuel_type,transmission,owner_type,engine_capacity,power,seats,description
+1,siddhantjverma@gmail.com,Hyundai,Santro,"HSR, Bangalore",two-wheeler,2014,Red,35000,15.0,petrol,manual,Second Owner,1200,75.0,5,"Well maintained car, small scratches"
+1,siddhantjverma@gmail.com,Hyundai,Santro,"HSR, Bangalore",two-wheeler,2014,Red,35000,15.0,petrol,manual,Second Owner,1200,75.0,5,"Well maintained car, small scratches"
+2,siddhantjverma@gmail.com,Suzuki,Swift,"BTM Layout, Bangalore",two-wheeler,2018,Black,35000,17.0,petrol,manual,First Owner,1200,80.0,5,"Modded exhaust, bent fender on front left tyre"
+4,siddhantjverma@gmail.com,Hyundai,i20,"Marathalli, Bangalore",two-wheeler,2020,Blue,16000,14.0,petrol,manual,First Owner,1400,76.0,5,No scratches and no dents
+9,siddhantjverma@gmail.com,Suzuki,Swift Dzire,"Yelahanka, Bangalore",two-wheeler,2017,Black,60000,15.0,petrol,manual,Third Owner,1300,78.0,5,"Minor dents, All India Permit Cab"
+1,siddhantjverma@gmail.com,Hyundai,Santro,"HSR, Bangalore",two-wheeler,2014,Red,75000,16.0,petrol,manual,First Owner,1100,78.0,5,"Great Condition, Minor scratches on the right front door"
+2,siddhantjverma@gmail.com,Honda,City,Bangalore,four-wheeler,2016,Black,35000,15.0,petrol,manual,First,1497,118.0,5,Good car
+1,siddhantjverma@gmail.com,Honda,City,Bangalore,four-wheeler,2016,Black,35000,16,petrol,manual,First,1497,117.0,5,Great condition vehicle with very less scratches 
+2,aaravbabu2002@gmail.com,Maruti,Swift,Bangalore,four-wheeler,2016,Black,35000,17,petrol,manual,First,1450,112.0,5,Good car
+3,aaravbabu2002@gmail.com,Tata,Tiago,Poon,four-wheeler,2021,Black,14000,13,petrol,manual,First,1198,85.0,5,nice Cat
+1,siddhantjverma@gmail.com,Honda,City,Bangalore,four-wheeler,2016,Black,15000,16,petrol,manual,First,1497,117.0,5,Good Car
+2,siddhantjverma@gmail.com,Maruti,Swift,Bangalore,two-wheeler,2016,Black,15000,17,petrol,manual,First,1200,85.0,5,Good Car Good Condition
+3,siddhantjverma@gmail.com,Maruti,Baleno,Bangalore,four-wheeler,2019,Silver,45000,17,petrol,manual,First,1197,75.0,5,Good Car Condition 
+4,siddhantjverma@gmail.com,Hyundai,i10,"JP Nagar, Bangalore",four-wheeler,2007,White,56000,10,petrol,automatic,First,1197,78.0,5,Good condition well maintained
+5,siddhantjverma@gmail.com,Hyundai,i10,"JP Nagar, Bangalore",four-wheeler,2007,White,56000,10,petrol,automatic,First,1197,78.0,5,Good condition well maintained
+6,siddhantjverma@gmail.com,Honda,Amaze,Bangalore,four-wheeler,2018,White,54000,16,petrol,manual,First,1199,85.0,5,Good Car well maintained
+1,siddhantjverma@gmail.com,Hyundai,i10,"VP Deendaylu, Bangalore",four-wheeler,2018,Orange,36000,15,petrol,manual,First,1197,85.0,5,"Good car, well maintained"
+1,siddhantjverma@gmail.com,Hyundai,i10,"VP Deendaylu, Bangalore",four-wheeler,2018,White,45000,15,petrol,manual,First,1197,85.0,5,"Good car, well maintained."
+1,siddhantjverma@gmail.com,Maruti,Swift,Bangalore,four-wheeler,2016,Black,35000,20,petrol,manual,First,1198,85.0,5,Good Condition
+2,siddhantjverma@gmail.com,Honda,Amaze,Bangalore,four-wheeler,2015,Black,35000,15,petrol,manual,First,1197,85.0,5,Good Car
+3,siddhantjverma@gmail.com,fadsf,adfadsf,dafds,four-wheeler,1231,dsaf,1231312,1231231,petrol,manual,fasdf,12312,123.0,4231,adfa
+1,siddhantjverma@gmail.com,Maruti,Swift,Bangalore,four-wheeler,2015,Black,35000,15,petrol,manual,First,1197,85.0,5,Good Car
+2,siddhantjverma@gmail.com,Ford,Ecosport,Bangalore,two-wheeler,2018,White,35000,15,petrol,manual,First,1498,85.0,5,"Good Car
+"
+3,siddhantjverma@gmail.com,Maruti,Swift,Bangalore,four-wheeler,2015,Black,35000,15,petrol,manual,First,1497,85.0,5,Good Car
+4,siddhantjverma@gmail.com,Honda,Amaze,Bangalore,four-wheeler,2015,Black,35000,15,petrol,manual,First,1497,117.0,5,"Good condition, less dents, slight color fade on right door"
+5,siddhantjverma@gmail.com,Hyundai,Elite i20,Bangalore,four-wheeler,2015,Black,35000,15,petrol,manual,First,1400,85.0,5,Good
+1,siddhantjverma@gmail.com,Maruti,Swift,Bangalore,four-wheeler,2015,Black,35000,16,petrol,manual,First,1197,85.0,5,Good Condition 
+2,siddhantjverma@gmail.com,Honda,Amaze,Bangalore,four-wheeler,2016,White,45000,17,petrol,manual,First,1199,78.0,5,Good condition
+3,siddhantjverma@gmail.com,Maruti,Baleno,Bangalore,four-wheeler,2016,Blue,54000,20,petrol,manual,First,1197,83.0,5,Good Condition
+1,siddhantjverma@gmail.com,Maruti,Swift VXI,"Bangalore,IN",four-wheeler,2015,Black,35000,16,petrol,manual,First,1197,85.0,5,"The car is in very good condition, has minor scratches on the sides and slight paint discolor on the rear."
+1,siddhantjverma@gmail.com,Maruti,Swift VXI,Bangalore,four-wheeler,2015,Black,35000,16,petrol,manual,First,1197,83.0,5,"Car is in good condition, slight dents on the side and no paint scratches."
+1,siddhantjverma@gmail.com,Maruti,Swift VXI,Bengaluru,four-wheeler,2015,Silver,35000,16,petrol,manual,First,1197,83.0,5,The car is in optimal condition.
+2,siddhantjverma@gmail.com,Honda,City,Mumbai,four-wheeler,2015,Black,35000,16,petrol,manual,First,1198,87.0,5,The car is in very good condition.

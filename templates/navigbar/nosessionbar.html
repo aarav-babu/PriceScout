@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='/css/navbar.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-brand">
+            <a href="/">
+                <img src="{{ url_for('static', filename='images/logo.jpeg') }}" alt="PriceScout">
+            </a>
+        </div>
+        <ul class="nav-links">
+            <li><a href="/">Home</a></li>
+            <li><a href="/misc/about">About</a></li>
+            <li><a href="/misc/contact">Contact</a></li>
+        </ul>
+        <div class="user-menu">
+            <a href="/userdata/login">Login</a>
+            <a href="/userdata/register">Sign Up</a>
+        </div>
+    </nav>
+</body>
+</html>
