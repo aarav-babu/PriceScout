@@ -2,8 +2,11 @@
 <html>
 
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mobile Phones Page</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='/css/postdata.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='/css/toast.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='/css/spinner.css') }}">
 </head>
 
 <body>
@@ -17,7 +20,7 @@
         <div class="page">
             <div class="container">
                 <h2>Mobile Phone Details</h2>
-                <form method="post" onsubmit="localStorage.setItem('mobileform', 'true');">
+                <form method="post" onsubmit="showSpinner()">
                     <div class="form-group">
                         <label for="brand">Brand:</label>
                         <input type="text" name="brand" id="brand" required>
@@ -63,6 +66,11 @@
             </div>
         </div>
     </div>
+    <div class="spinner-overlay" id="spinner-overlay">
+        <div class="spinner"></div>
+        <p class="spinner-text">Submitting data...</p>
+    </div>
+    <script src="{{ url_for('static', filename='/script/spinner.js') }}"></script>
 </body>
 
 </html>

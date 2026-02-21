@@ -2,8 +2,9 @@
 <html lang="en">
 
 <head>
-    <title>Sliding Form</title>
+    <title>PriceScout - Login</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='/css/loginsignup.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='/css/toast.css') }}">
     {% if signupside %}
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -17,34 +18,33 @@
         });
     </script>
     {% endif %}
-    {% if alert_message_login %}
-    <script>
-        alert("Please re-enter username and password. Please register if not registered.")
-    </script>
-    {% endif %}
-    {% if error_message_register %}
-    <script>
-        alert("Error: {{ error_message_register }}");
-        localStorage.removeItem('registered');
-    </script>
-    {% endif %}
-    <script>
-        if (localStorage.getItem('registered') === 'true' && '{{ error_message_register }}' === '') {
-            // Display the alert
-            alert('Account registered. Please login.');
-
-            // Clear the registered flag
-            localStorage.removeItem('registered');
-        }
-    </script>
 </head>
 
 <body>
     {% include '/navigbar/nosessionbar.html' %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="toast-container">
+        {% for category, message in messages %}
+        <div class="toast toast-{{ category }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+    {% if alert_message_login %}
+    <div class="toast-container">
+        <div class="toast toast-error">Invalid username or password. Please register if not registered.</div>
+    </div>
+    {% endif %}
+    {% if error_message_register %}
+    <div class="toast-container">
+        <div class="toast toast-error">Error: {{ error_message_register }}</div>
+    </div>
+    {% endif %}
     <div class='page'>
         <div class='container' id='main'>
             <div class='sign-up'>
-                <form action="/userdata/register" method="post" onsubmit="localStorage.setItem('registered', 'true');">
+                <form action="/userdata/register" method="post">
                     <h1>Create Account</h1>
                     <p>Please input your data to register.</p>
                     <input type="name" id="name" name="name" placeholder="Name" required>
@@ -56,7 +56,7 @@
                 </form>
             </div>
             <div class='sign-in'>
-                <form action="/userdata/login" method="post" onsubmit="localStorage.setItem('loggedin', 'true');">
+                <form action="/userdata/login" method="post">
                     <h1>Login</h1>
                     <p>Don't have an account? Register.</p>
                     <input type='username' name='username' placeholder='Username' required=''>
@@ -79,6 +79,7 @@
         </div>
     </div>
     <script src="{{ url_for('static', filename='/script/loginsignup.js') }}"></script>
+    <script src="{{ url_for('static', filename='/script/toast.js') }}"></script>
 </body>
 
 </html>

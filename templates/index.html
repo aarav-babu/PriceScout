@@ -2,37 +2,23 @@
 <html>
 
 <head>
-  <title>Landing Page</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PriceScout - Dashboard</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='/css/index.css') }}">
-  {% if alert_message %}
-    <script>
-        alert('Please enter data to view a price. To view already retrieved price, go to Userprofile');
-    </script>
-  {% endif %}
-  <script>
-    // Check if the user is loggedin
-    if (localStorage.getItem('loggedin') === 'true') {
-      // Display the alert
-      alert('Login Successful. Going to homepage');
-      localStorage.removeItem('loggedin');
-    } else if (localStorage.getItem('mobileform') === 'true') {
-      // Display the alert
-      alert('Mobile data submitted.');
-      localStorage.removeItem('mobileform')
-    } else if (localStorage.getItem('laptopform') === 'true') {
-      // Display the alert
-      alert('Laptop data submitted.');
-      localStorage.removeItem('laptopform')
-    } else if (localStorage.getItem('vehicleform') === 'true') {
-      // Display the alert
-      alert('Vehicle data submitted.');
-      localStorage.removeItem('vehicleform')
-    }
-  </script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='/css/toast.css') }}">
 </head>
 
 <body>
   {% include '/navigbar/navbar.html' %}
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <div class="toast-container">
+      {% for category, message in messages %}
+      <div class="toast toast-{{ category }}">{{ message }}</div>
+      {% endfor %}
+  </div>
+  {% endif %}
+  {% endwith %}
   <div class="landing">
     <h1>PriceScout</h1>
         <h3>The one-stop solution to quickly and accurately estimate the value of second hand items</h3>
@@ -68,6 +54,7 @@
       </div>
     </a>
   </div>
+  <script src="{{ url_for('static', filename='/script/toast.js') }}"></script>
 </body>
 
 </html>

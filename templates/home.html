@@ -4,21 +4,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Capstone</title>
+    <title>PriceScout</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='/css/home.css') }}">
-    <script>
-        // Check if the user is registered
-        if (localStorage.getItem('loggedout') === 'true') {
-            // Display the alert
-            alert('User logged out.');
-            // Clear the registered flag
-            localStorage.removeItem('loggedout');
-        }
-    </script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='/css/toast.css') }}">
 </head>
 
 <body>
     {% include '/navigbar/nosessionbar.html' %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="toast-container">
+        {% for category, message in messages %}
+        <div class="toast toast-{{ category }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
     <div class="landing">
         <h1>PriceScout</h1>
         <h3>The one-stop solution to quickly and accurately estimate the value of second hand items</h3>
@@ -50,7 +51,9 @@
             <p></p>
         </div>
 
+    </div>
         <script src="{{ url_for('static', filename='/script/home.js') }}"></script>
+    <script src="{{ url_for('static', filename='/script/toast.js') }}"></script>
 </body>
 
 </html>
