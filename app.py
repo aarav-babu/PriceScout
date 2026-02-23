@@ -3,6 +3,7 @@ import functools
 import csv
 import os
 import hashlib
+from datetime import datetime
 
 import pandas as pd
 import mysql.connector
@@ -51,6 +52,34 @@ def close_db(exception):
 
 
 # ---------------------------------------------------------------------------
+# Ingestion logging helper
+# ---------------------------------------------------------------------------
+
+def log_ingestion(run_type, stats=None, *, started_at=None, status='success', error_detail=None):
+    now = datetime.utcnow()
+    cursor = get_cursor()
+    cursor.execute(
+        """INSERT INTO ingestion_log
+           (run_type, started_at, finished_at, listings_processed, listings_inserted,
+            listings_deduped, errors, duration_seconds, status, error_detail)
+           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+        (
+            run_type,
+            started_at or now,
+            now,
+            stats.listings_processed if stats else 1,
+            stats.listings_inserted if stats else 1,
+            stats.listings_deduped if stats else 0,
+            stats.errors if stats else 0,
+            stats.duration_seconds if stats else 0,
+            status,
+            error_detail,
+        ),
+    )
+    get_db().commit()
+
+
+# ---------------------------------------------------------------------------
 # Auth decorator
 # ---------------------------------------------------------------------------
 
@@ -60,6 +89,16 @@ def login_required(f):
         if 'user_id' not in session:
             flash('Please log in to access this page.', 'warning')
             return redirect('/userdata/login')
+        # If the DB was recreated (common in Docker), the browser may still have an old session cookie.
+        # Validate that the user still exists and cache their email for the request.
+        cursor = get_cursor()
+        cursor.execute("SELECT email FROM users WHERE username = %s", (session['user_id'],))
+        row = cursor.fetchone()
+        if row is None:
+            session.clear()
+            flash('Your session expired. Please log in again.', 'warning')
+            return redirect('/userdata/login')
+        g.current_user_email = row[0]
         return f(*args, **kwargs)
     return decorated_function
 
@@ -165,8 +204,7 @@ def register():
 
 @app.route('/logout')
 def logout():
-    if 'user_id' in session:
-        session.pop('user_id', None)
+    session.clear()
     flash('You have been logged out.', 'info')
     return redirect('/')
 
@@ -202,26 +240,32 @@ def cars():
         location = request.form['location']
         mileage = request.form['mileage']
 
+        user_email = g.current_user_email
         cursor = get_cursor()
-        cursor.execute("SELECT email FROM users WHERE username = %s", (session['user_id'],))
-        data = cursor.fetchone()
 
         cursor.execute(
-            'INSERT INTO vehicle(user_email, brand, name_model, location, vehicle_type, model_year, color, km_driven, mileage, fuel_type, transmission, owner_type, engine_capacity, power, seats, description) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',
-            (data[0], brandcar, name_model, location, vehicle_type, model_year, color, kilometers_driven, mileage, fuel_type, transmission_type, owner_type, engine_capacity, power, seats, description),
+            """INSERT INTO vehicle(user_email, brand, name_model, location, vehicle_type, model_year, color, km_driven, mileage, fuel_type, transmission, owner_type, engine_capacity, power, seats, description)
+               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+               ON DUPLICATE KEY UPDATE
+                 location=VALUES(location), vehicle_type=VALUES(vehicle_type), color=VALUES(color),
+                 mileage=VALUES(mileage), fuel_type=VALUES(fuel_type), transmission=VALUES(transmission),
+                 owner_type=VALUES(owner_type), engine_capacity=VALUES(engine_capacity),
+                 power=VALUES(power), seats=VALUES(seats), description=VALUES(description)""",
+            (user_email, brandcar, name_model, location, vehicle_type, model_year, color, kilometers_driven, mileage, fuel_type, transmission_type, owner_type, engine_capacity, power, seats, description),
         )
         get_db().commit()
         session['post_type'] = 'vehicle'
 
-        cursor.execute("SELECT post_id FROM vehicle WHERE user_email = %s ORDER BY post_id DESC LIMIT 1;", (data[0],))
+        cursor.execute("SELECT post_id FROM vehicle WHERE user_email = %s ORDER BY post_id DESC LIMIT 1;", (user_email,))
         post_id = cursor.fetchone()
 
         cursor.execute(
             'INSERT INTO price (email, post_id, post_type, brand, model, description) VALUES (%s, %s, %s, %s, %s, %s)',
-            (data[0], post_id[0], 'vehicle', brandcar, name_model, description),
+            (user_email, post_id[0], 'vehicle', brandcar, name_model, description),
         )
         get_db().commit()
 
+        log_ingestion('form_vehicle')
         create_csv()
         input_query()
         flash('Vehicle data submitted successfully.', 'success')
@@ -244,26 +288,31 @@ def mobiles():
         camera = request.form['camera']
         description = request.form['description']
 
+        user_email = g.current_user_email
         cursor = get_cursor()
-        cursor.execute("SELECT email FROM users WHERE username = %s", (session['user_id'],))
-        data = cursor.fetchone()
 
         cursor.execute(
-            'INSERT INTO mobiles (email, brand, model_name, sim_slots, processor, ram, storage_size, battery_size, display, camera, description) VALUES (%s,%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
-            (data[0], brand, model_name, sim_slots, processor, ram, storage_size, battery_size, display, camera, description),
+            """INSERT INTO mobiles (email, brand, model_name, sim_slots, processor, ram, storage_size, battery_size, display, camera, description)
+               VALUES (%s,%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+               ON DUPLICATE KEY UPDATE
+                 sim_slots=VALUES(sim_slots), processor=VALUES(processor),
+                 battery_size=VALUES(battery_size), display=VALUES(display),
+                 camera=VALUES(camera), description=VALUES(description)""",
+            (user_email, brand, model_name, sim_slots, processor, ram, storage_size, battery_size, display, camera, description),
         )
         get_db().commit()
         session['post_type'] = 'mobiles'
 
-        cursor.execute("SELECT post_id FROM mobiles WHERE email = %s ORDER BY post_id DESC LIMIT 1;", (data[0],))
+        cursor.execute("SELECT post_id FROM mobiles WHERE email = %s ORDER BY post_id DESC LIMIT 1;", (user_email,))
         post_id = cursor.fetchone()
 
         cursor.execute(
             'INSERT INTO price (email, brand, model, description, post_id, post_type) VALUES (%s, %s, %s, %s, %s, %s)',
-            (data[0], brand, model_name, description, post_id[0], session['post_type']),
+            (user_email, brand, model_name, description, post_id[0], session['post_type']),
         )
         get_db().commit()
 
+        log_ingestion('form_mobile')
         create_csv()
         flash('Mobile data submitted successfully.', 'success')
         return redirect('/')
@@ -286,26 +335,31 @@ def laptops():
         laptop_type = request.form['laptop-type']
         description = request.form['description']
 
+        user_email = g.current_user_email
         cursor = get_cursor()
-        cursor.execute("SELECT email FROM users WHERE username = %s", (session['user_id'],))
-        data = cursor.fetchone()
 
         cursor.execute(
-            'INSERT INTO laptops (email, brandlap, model, processor, ram_size, memory_type, memory_size, display_size, refresh_rate, battery, laptop_type, description) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
-            (data[0], brandlap, model, processor, ram_size, memory_type, memory_size, display_size, refresh_rate, battery, laptop_type, description),
+            """INSERT INTO laptops (email, brandlap, model, processor, ram_size, memory_type, memory_size, display_size, refresh_rate, battery, laptop_type, description)
+               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+               ON DUPLICATE KEY UPDATE
+                 memory_type=VALUES(memory_type), memory_size=VALUES(memory_size),
+                 display_size=VALUES(display_size), refresh_rate=VALUES(refresh_rate),
+                 battery=VALUES(battery), laptop_type=VALUES(laptop_type), description=VALUES(description)""",
+            (user_email, brandlap, model, processor, ram_size, memory_type, memory_size, display_size, refresh_rate, battery, laptop_type, description),
         )
         get_db().commit()
         session['post_type'] = 'laptops'
 
-        cursor.execute("SELECT post_id FROM laptops WHERE email = %s ORDER BY post_id DESC LIMIT 1;", (data[0],))
+        cursor.execute("SELECT post_id FROM laptops WHERE email = %s ORDER BY post_id DESC LIMIT 1;", (user_email,))
         post_id = cursor.fetchone()
 
         cursor.execute(
             'INSERT INTO price (email, brand, model, description, post_id, post_type) VALUES (%s, %s, %s, %s, %s, %s)',
-            (data[0], brandlap, model, description, post_id[0], session['post_type']),
+            (user_email, brandlap, model, description, post_id[0], session['post_type']),
         )
         get_db().commit()
 
+        log_ingestion('form_laptop')
         create_csv()
         flash('Laptop data submitted successfully.', 'success')
         return redirect('/')
@@ -322,10 +376,13 @@ def pricing():
     call_webscraper()
     cursor = get_cursor()
     cursor.execute(
-        "SELECT CONCAT(Brand, ' ', Model) AS Name, post_type, price FROM price WHERE email IN (SELECT email FROM users WHERE username = %s) ORDER BY post_id DESC LIMIT 1;",
-        (session['user_id'],),
+        "SELECT CONCAT(Brand, ' ', Model) AS Name, post_type, price FROM price WHERE email = %s ORDER BY post_id DESC LIMIT 1;",
+        (g.current_user_email,),
     )
     result = cursor.fetchone()
+    if result is None:
+        flash('No recent price request found for your account yet.', 'warning')
+        return redirect('/')
 
     img_data = '/static/images/defaultprice.jpg'
     if session['post_type'] == 'vehicle':
@@ -495,11 +552,19 @@ def call_webscraper():
         for i, key in enumerate(keys):
             car_details[key] = row[i]
 
-    driver = wsi.start_driver()
-    price = wsi.ui_scrape(car_details, driver)
-    pid = get_postid()
-    email = get_email()
-    enter_price(price, pid, email)
+    logger.info(">>> call_webscraper() triggered for: %s", car_details)
+    started = datetime.utcnow()
+    try:
+        price, stats = wsi.ui_scrape(car_details)
+        logger.info(">>> Scraper returned price=%s, listings=%d", price, stats.listings_processed)
+        pid = get_postid()
+        email = get_email()
+        enter_price(price, pid, email)
+        log_ingestion('scrape', stats, started_at=started)
+    except Exception as exc:
+        logger.error(">>> Scraper failed: %s", exc)
+        log_ingestion('scrape', started_at=started, status='failed', error_detail=str(exc))
+        raise
 
 
 def enter_price(price, pid, email):
@@ -539,4 +604,7 @@ def get_postid():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    host = os.getenv('FLASK_HOST', '127.0.0.1')
+    port = int(os.getenv('FLASK_PORT', '5000'))
+    debug = os.getenv('FLASK_DEBUG', '1').lower() in ('1', 'true', 'yes', 'y', 'on')
+    app.run(host=host, port=port, debug=debug)

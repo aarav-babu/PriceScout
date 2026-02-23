@@ -21,6 +21,9 @@ SET time_zone = "+00:00";
 -- Database: `capstone`
 --
 
+CREATE DATABASE IF NOT EXISTS `capstone`;
+USE `capstone`;
+
 -- --------------------------------------------------------
 
 --
@@ -208,6 +211,61 @@ ALTER TABLE `price`
 --
 ALTER TABLE `vehicle`
   ADD CONSTRAINT `vehicle_ibfk_1` FOREIGN KEY (`user_email`) REFERENCES `users` (`email`) ON DELETE CASCADE;
+
+-- --------------------------------------------------------
+-- Query-pattern indexes
+-- --------------------------------------------------------
+
+ALTER TABLE `vehicle`
+  ADD INDEX `idx_vehicle_brand` (`brand`),
+  ADD INDEX `idx_vehicle_location` (`location`),
+  ADD INDEX `idx_vehicle_model_year` (`model_year`);
+
+ALTER TABLE `mobiles`
+  ADD INDEX `idx_mobiles_brand` (`brand`);
+
+ALTER TABLE `laptops`
+  ADD INDEX `idx_laptops_brandlap` (`brandlap`);
+
+ALTER TABLE `price`
+  ADD INDEX `idx_price_post_type` (`post_type`),
+  ADD INDEX `idx_price_brand` (`brand`),
+  ADD INDEX `idx_price_email_post_type` (`email`, `post_type`);
+
+-- --------------------------------------------------------
+-- Unique constraints for dedupe (idempotent upserts)
+-- --------------------------------------------------------
+
+ALTER TABLE `vehicle`
+  ADD UNIQUE KEY `uq_vehicle_listing` (`user_email`(100), `brand`(50), `name_model`(100), `model_year`, `km_driven`);
+
+ALTER TABLE `mobiles`
+  ADD UNIQUE KEY `uq_mobile_listing` (`email`(100), `brand`(50), `model_name`(100), `storage_size`, `ram`);
+
+ALTER TABLE `laptops`
+  ADD UNIQUE KEY `uq_laptop_listing` (`email`(100), `brandlap`(50), `model`(100), `processor`(100), `ram_size`);
+
+-- --------------------------------------------------------
+-- Ingestion log table
+-- --------------------------------------------------------
+
+CREATE TABLE `ingestion_log` (
+  `run_id` int(11) NOT NULL AUTO_INCREMENT,
+  `run_type` varchar(50) NOT NULL COMMENT 'scrape | form_vehicle | form_mobile | form_laptop',
+  `started_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `finished_at` datetime DEFAULT NULL,
+  `listings_processed` int(11) NOT NULL DEFAULT 0,
+  `listings_inserted` int(11) NOT NULL DEFAULT 0,
+  `listings_deduped` int(11) NOT NULL DEFAULT 0,
+  `errors` int(11) NOT NULL DEFAULT 0,
+  `duration_seconds` float DEFAULT NULL,
+  `status` varchar(20) NOT NULL DEFAULT 'running' COMMENT 'running | success | failed',
+  `error_detail` text DEFAULT NULL,
+  PRIMARY KEY (`run_id`),
+  INDEX `idx_ingestion_started` (`started_at`),
+  INDEX `idx_ingestion_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

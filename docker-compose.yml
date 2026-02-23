@@ -1,0 +1,52 @@
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_DATABASE: capstone
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./capstone.sql:/docker-entrypoint-initdb.d/01-capstone.sql:ro
+      - ./seed_data.sql:/docker-entrypoint-initdb.d/02-seed-data.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1"]
+      interval: 5s
+      timeout: 5s
+      retries: 25
+
+  web:
+    build: .
+    environment:
+      FLASK_HOST: 0.0.0.0
+      FLASK_PORT: "5000"
+      FLASK_DEBUG: "1"
+      FLASK_SECRET_KEY: ${FLASK_SECRET_KEY:-change-this-to-a-random-secret-key}
+      DB_HOST: db
+      DB_USER: root
+      DB_PASSWORD: ""
+      DB_NAME: capstone
+    ports:
+      - "${WEB_PORT:-5001}:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  streamlit:
+    build:
+      context: .
+      dockerfile: Dockerfile.streamlit
+    environment:
+      DB_HOST: db
+      DB_USER: root
+      DB_PASSWORD: ""
+      DB_NAME: capstone
+    ports:
+      - "${STREAMLIT_PORT:-8501}:8501"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db_data:

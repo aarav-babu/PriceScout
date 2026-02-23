@@ -4,16 +4,16 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vehicle Details Page</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='/css/postdata.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='/css/toast.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='/css/spinner.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/postdata.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/toast.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/spinner.css') }}">
 </head>
 
 <body>
     {% include '/navigbar/navbar.html' %}
     <div class="carformcontainer">
         <video autoplay muted loop id="bg-video">
-            <source src="{{ url_for('static', filename='/videos/vehicle_bg.mp4') }}" type="video/mp4">
+            <source src="{{ url_for('static', filename='videos/vehicle_bg.mp4') }}" type="video/mp4">
             Your browser does not support the video tag.
         </video>
         <div class="page">
@@ -99,7 +99,7 @@
         <div class="spinner"></div>
         <p class="spinner-text">Submitting data...</p>
     </div>
-    <script src="{{ url_for('static', filename='/script/spinner.js') }}"></script>
+    <script src="{{ url_for('static', filename='script/spinner.js') }}"></script>
 </body>
 
 </html>
