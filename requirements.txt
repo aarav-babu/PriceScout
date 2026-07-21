@@ -1,0 +1,11 @@
+Flask
+pandas
+numpy
+mysql-connector-python
+scikit-learn
+seaborn
+matplotlib
+joblib
+selenium
+celery
+redis
