@@ -1,3 +1,4 @@
+import os
 import time
 import pandas as pd
 from selenium import webdriver
@@ -269,10 +270,15 @@ def ui_scrape(car_details,driver):
     return int(price)
 
 def start_driver():
-    driver = webdriver.Firefox()
+    options = webdriver.FirefoxOptions()
+    # Default to headless so live scraping can run on servers without a display.
+    if os.getenv("SELENIUM_HEADLESS", "true").strip().lower() in ("1", "true", "yes", "on"):
+        options.add_argument("-headless")
+    driver = webdriver.Firefox(options=options)
     action=ActionChains(driver)
-    driver.minimize_window()
-    driver.maximize_window()
+    if not options.arguments or "-headless" not in options.arguments:
+        driver.minimize_window()
+        driver.maximize_window()
     return driver
 
 # driver=start_driver()
