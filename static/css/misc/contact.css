@@ -25,11 +25,11 @@ html {
 
 .container {
     width: 70%;
-    background: #091e2c;
-    border-radius: 25px;
+    background: linear-gradient(135deg, #0f2c43, #0b1f2f);
+    border-radius: 20px;
     max-width: 1000px;
-    padding: 20px;
-    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.8);
+    padding: 40px;
+    box-shadow: 0 20px 45px rgba(15, 44, 67, 0.18);
 }
 
 .container .content {
@@ -108,9 +108,8 @@ html {
     outline: none;
     font-size: 14px;
     background: #F0F1F8;
-    border-radius: 6px;
-    padding: 0 3px;
-    margin-top: 40px;
+    border-radius: 10px;
+    padding: 10px 12px;
     resize: none;
 }
 
@@ -128,15 +127,16 @@ html {
 }
 
 .right-side .button input[type="button"] {
-    color: #091e2c;
-    font-size: 18px;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
     outline: none;
     border: none;
-    padding: 8px 16px;
-    border-radius: 6px;
-    background: #f4e7e7;
+    padding: 11px 26px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #14b8a6, #0d9488);
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
 }
 
 p {
