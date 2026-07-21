@@ -6,19 +6,6 @@
   padding: 96px 24px 40px;
 }
 
-/* Subtle dot-grid backdrop - restrained, not decorative slop */
-.landing::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background-image: radial-gradient(var(--border-strong) 1px, transparent 1px);
-  background-size: 22px 22px;
-  -webkit-mask-image: radial-gradient(ellipse 70% 70% at 50% 30%, #000 30%, transparent 75%);
-  mask-image: radial-gradient(ellipse 70% 70% at 50% 30%, #000 30%, transparent 75%);
-  opacity: 0.5;
-}
-
 .landing::before {
   content: "AI-powered resale valuations";
   display: inline-flex;
