@@ -32,10 +32,28 @@ DB_CONFIG = {
     "database": os.getenv("DB_NAME", "capstone"),
 }
 
+# Absolute base dir of the app so bundled data (datasets, templates) resolve
+# correctly regardless of the current working directory (e.g. on serverless).
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Writable directory for the per-post CSV logs. On platforms with a read-only
+# app filesystem (Vercel/Netlify functions) point this at a writable path such
+# as /tmp via the DATA_DIR env var.
+DATA_DIR = os.getenv("DATA_DIR", BASE_DIR)
+
+
+def _data_path(name):
+    return os.path.join(DATA_DIR, name)
+
+
 # When live scraping is disabled (the default for hosted deployments), the price
 # estimate is produced by training the model on the bundled market dataset.
 ENABLE_LIVE_SCRAPING = _env_bool("ENABLE_LIVE_SCRAPING", False)
-CACHED_CARS_DATASET = os.getenv("CACHED_CARS_DATASET", "new_cars.csv")
+_cached_dataset = os.getenv("CACHED_CARS_DATASET", "new_cars.csv")
+CACHED_CARS_DATASET = _cached_dataset if os.path.isabs(_cached_dataset) else os.path.join(BASE_DIR, _cached_dataset)
+
+# Scraper source used when ENABLE_LIVE_SCRAPING is true (see scrapers.py).
+SCRAPER_SOURCE = os.getenv("SCRAPER_SOURCE", "cars24")
 
 
 def make_hashes(password):
@@ -365,64 +383,50 @@ def ret_single_data():
       data = cursor.fetchall()
   return data
 #INSERT INTO price  WHERE email IN (SELECT email FROM users WHERE username = 'aarav') AND post_type = 'vehicles' AND post_id IN (SELECT post_id FROM vehicles WHERE user_email = 'aaravbabu2002@gmail.com' ORDER BY post_id DESC LIMIT 1) 
-def create_csv ():
+CSV_HEADERS = {
+  'vehicle': ['post_id', 'user_email', 'brand', 'model', 'location', 'vehicle_type', 'model_year', 'color', 'km_driven', 'mileage', 'fuel_type', 'transmission', 'owner_type', 'engine_capacity', 'power', 'seats', 'description'],
+  'mobiles': ['post_id', 'email', 'brand', 'model_name', 'sim_slots', 'processor', 'ram', 'storage_size', 'battery_size', 'display', 'camera', 'description'],
+  'laptops': ['post_id', 'email', 'brandlap', 'model', 'processor', 'ram_size', 'memory_type', 'memory_size', 'display_size', 'refresh_rate', 'battery', 'laptop_type', 'description'],
+}
+
+
+def create_csv():
+  """Append the latest post to a CSV log. Best-effort: on a read-only
+  filesystem (serverless) this is skipped without failing the request."""
+  post_type = session['post_type']
+  filename = {'vehicle': 'vehicles.csv', 'mobiles': 'mobiles.csv', 'laptops': 'laptops.csv'}.get(post_type)
+  if not filename:
+    return
   data = ret_db_data()
-  if session ['post_type'] == 'vehicle':
-    if not os.path.exists('vehicles.csv'):
-      with open('vehicles.csv', 'w', newline='') as f:
-        writer = csv.writer(f)
-        writer.writerow(['post_id','user_email' , 'brand', 'model','location','vehicle_type', 'model_year', 'color', 'km_driven','mileage' 'fuel_type', 'transmission', 'owner_type', 'engine_capacity', 'power', 'seats', 'description'])
-        f.close()
-        # Create a CSV writer object
-    with open('vehicles.csv', 'a', newline='') as g:
-      writer = csv.writer(g)
-      # Write each row of data to the CSV file
-      #for row in data[len(data)-1]:
-      writer.writerow(data[len(data)-1])
-      g.close()
-
-  elif session ['post_type'] == 'mobiles':
-    if not os.path.exists('mobiles.csv'):
-      with open('mobiles.csv', 'w', newline='') as f:
-        writer = csv.writer(f)
-        writer.writerow(['post_id','email', 'brand', 'model_name', 'sim_slots', 'processor', 'ram', 'storage_size', 'battery_size', 'display', 'camera', 'description'])
-        f.close()
-        # Write each row of data to the CSV file
-    with open('mobiles.csv', 'a', newline='') as g:
-      writer = csv.writer(g)
-      # Write each row of data to the CSV file
-      #for row in data[len(data)-1]:
-      writer.writerow(data[len(data)-1])
-      g.close()
-
-  elif session ['post_type'] == 'laptops':
-    if not os.path.exists('laptops.csv'):
-      with open('laptops.csv', 'w', newline='') as f:
-        writer = csv.writer(f)
-        # Write the header row
-        writer.writerow(['post_id','email', 'brandlap', 'model', 'processor', 'ram_size', 'memory_type', 'memory_size', 'display_size', 'refresh_rate', 'battery', 'laptop_type', 'description'])
-        f.close()
-    # Write each row of data to the CSV file
-    with open('laptops.csv', 'a', newline='') as g:
-      writer = csv.writer(g)
-      # Write each row of data to the CSV file
-      #for row in data[len(data)-1]:
-      writer.writerow(data[len(data)-1])
-      g.close()
+  path = _data_path(filename)
+  try:
+    if not os.path.exists(path):
+      with open(path, 'w', newline='') as f:
+        csv.writer(f).writerow(CSV_HEADERS[post_type])
+    with open(path, 'a', newline='') as g:
+      csv.writer(g).writerow(data[len(data) - 1])
+  except OSError as exc:
+    print(f"[create_csv] Skipping CSV log write ({path}): {exc}")
 
 
 def input_query():
-    if session['post_type'] == "vehicle":
-        df = pd.read_csv("vehicles.csv")
-        input_query = df.query("brand != '' and model != ''").apply(lambda row: f"{row['brand']} {row['model']}", axis=1)
-    elif session['post_type'] == "mobiles":
-        df = pd.read_csv("mobiles.csv")
-        input_query = df.query("brand != '' and model_name != ''").apply(lambda row: f"{row['brand']} {row['model_name']}", axis=1)
-    elif session['post_type'] == "laptops":
-        df = pd.read_csv("laptops.csv")
-        input_query = df.query("brandlap != '' and model != ''").apply(lambda row: f"{row['brandlap']} {row['model']}", axis=1)
-    x = len(input_query)
-    return input_query[x-1]
+    try:
+        if session['post_type'] == "vehicle":
+            df = pd.read_csv(_data_path("vehicles.csv"))
+            input_query = df.query("brand != '' and model != ''").apply(lambda row: f"{row['brand']} {row['model']}", axis=1)
+        elif session['post_type'] == "mobiles":
+            df = pd.read_csv(_data_path("mobiles.csv"))
+            input_query = df.query("brand != '' and model_name != ''").apply(lambda row: f"{row['brand']} {row['model_name']}", axis=1)
+        elif session['post_type'] == "laptops":
+            df = pd.read_csv(_data_path("laptops.csv"))
+            input_query = df.query("brandlap != '' and model != ''").apply(lambda row: f"{row['brandlap']} {row['model']}", axis=1)
+        else:
+            return None
+        x = len(input_query)
+        return input_query[x-1]
+    except (OSError, KeyError, IndexError) as exc:
+        print(f"[input_query] Skipped ({exc})")
+        return None
 
 
 
@@ -446,10 +450,14 @@ def call_webscraper():
   price = None
   if ENABLE_LIVE_SCRAPING:
     try:
-      driver = wsi.start_driver()
-      price = wsi.ui_scrape(car_details, driver)
+      from scrapers import get_scraper
+      df = get_scraper(SCRAPER_SOURCE).scrape(car_details)
+      if df is not None and not df.empty:
+        price = int(mo.model_call(df, car_details))
+      else:
+        print(f"[pricing] Scraper '{SCRAPER_SOURCE}' returned no rows; using cached dataset.")
     except Exception as exc:
-      print(f"[pricing] Live scraping failed, falling back to cached dataset: {exc}")
+      print(f"[pricing] Live scraping via '{SCRAPER_SOURCE}' failed, falling back to cached dataset: {exc}")
       price = None
 
   if price is None:
