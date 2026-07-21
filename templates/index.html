@@ -3,8 +3,6 @@
 
 <head>
   <title>Landing Page</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='/css/theme.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='/css/index.css') }}">
   {% if alert_message %}
@@ -39,7 +37,7 @@
   <div class="landing">
     <h1>PriceScout</h1>
         <h3>The one-stop solution to quickly and accurately estimate the value of second hand items</h3>
-        <p id = 'landingpara'>Our platform offers a seamless valuation experience for mobile phones, laptops, and vehicles. <br>Share your device details, and our system will provide an estimated value based on key factors.<br> Explore the features, submit your items, and enjoy the convenience of swift valuations!</p>
+        <p id = 'landingpara'>Share your device details and our system returns an estimated value based on the key factors that drive resale price.</p>
   </div>
   <div class="container">
     <a href="/postdata/cars">
