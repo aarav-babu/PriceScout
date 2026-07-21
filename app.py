@@ -75,7 +75,9 @@ cursor = None
 def init_db():
     global mydb, cursor
     mydb = mysql.connector.connect(**DB_CONFIG)
-    cursor = mydb.cursor()
+    # Buffered cursors fully read each result set, avoiding "Unread result
+    # found" errors when a query is issued before a prior result is drained.
+    cursor = mydb.cursor(buffered=True)
     return mydb
 
 
@@ -87,7 +89,7 @@ def ensure_db():
     try:
         mydb.ping(reconnect=True, attempts=3, delay=1)
         if cursor is None:
-            cursor = mydb.cursor()
+            cursor = mydb.cursor(buffered=True)
     except mysql.connector.Error:
         init_db()
 
