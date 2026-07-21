@@ -1,96 +1,133 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-    <title>Vehicle Details Page</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Value your car | PriceScout</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='/css/theme.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='/css/postdata.css') }}">
 </head>
 
 <body>
     {% include '/navigbar/navbar.html' %}
-    <div class="carformcontainer">
-        <video autoplay muted loop id="bg-video">
-            <source src="{{ url_for('static', filename='/videos/vehicle_bg.mp4') }}" type="video/mp4">
-            Your browser does not support the video tag.
-        </video>
-        <div class="page">
-            <div class="container">
-                <h2>Vehicle Details</h2>
+    <div class="form-page">
+        <div class="form-layout">
+            <aside class="form-aside">
+                <span class="eyebrow">Instant valuation</span>
+                <h1>Value your car</h1>
+                <p class="form-aside-sub">Tell us about your vehicle and we'll benchmark it against real market
+                    listings to estimate a fair resale price.</p>
+                <ul class="assurance">
+                    <li>Trusted local &amp; national pricing</li>
+                    <li>Benchmarked on live market data</li>
+                    <li>Takes less than a minute</li>
+                </ul>
+                <div class="form-progress">
+                    <span class="step-dot"></span> Vehicle &nbsp;·&nbsp; Specs &nbsp;·&nbsp; Condition
+                </div>
+            </aside>
+
+            <main class="form-main">
                 <form method="post" onsubmit="localStorage.setItem('vehicleform', 'true');">
-                    <div class="form-group">
-                        <label for="vehicle-type">Vehicle Type:</label>
-                        <select name="vehicle-type" id="vehicle-type" required>
-                            <option value="two-wheeler">Two Wheeler</option>
-                            <option value="four-wheeler">Four Wheeler</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="brand">Brand:</label>
-                        <input type="text" name="brand" id="brand" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="name-model">Name/Model:</label>
-                        <input type="text" name="name-model" id="name-model" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="model-year">Model Year:</label>
-                        <input type="number" name="model-year" id="model-year" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="kilometers-driven">Kilometers Driven:</label>
-                        <input type="number" name="kilometers-driven" id="kilometers-driven" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="fuel-type">Fuel Type:</label>
-                        <select name="fuel-type" id="fuel-type" required>
-                            <option value="petrol">Petrol</option>
-                            <option value="diesel">Diesel</option>
-                            <option value="cng">CNG</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="transmission-type">Transmission Type:</label>
-                        <select name="transmission-type" id="transmission-type" required>
-                            <option value="manual">Manual</option>
-                            <option value="automatic">Automatic</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="mileage">Mileage:</label>
-                        <input type="number" name="mileage" id="mileage" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="owner-type">Owner Type:</label>
-                        <input type="text" name="owner-type" id="owner-type" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="engine-capacity">Engine Capacity:</label>
-                        <input type="text" name="engine-capacity" id="engine-capacity" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="power">Power:</label>
-                        <input type="text" name="power" id="power" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="seats">Number of Seats:</label>
-                        <input type="number" name="seats" id="seats" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="color">Color:</label>
-                        <input type="text" name="color" id="color" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="location">Location:</label>
-                        <input type="text" name = "location" id="location" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="description">Description:</label>
-                        <textarea name="description" id="description" rows="5" required></textarea>
-                    </div>
-                    <button type="submit">Submit</button>
+                    <fieldset class="form-section">
+                        <legend>Vehicle</legend>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="vehicle-type">Vehicle type</label>
+                                <select name="vehicle-type" id="vehicle-type" required>
+                                    <option value="two-wheeler">Two wheeler</option>
+                                    <option value="four-wheeler">Four wheeler</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="brand">Brand</label>
+                                <input type="text" name="brand" id="brand" placeholder="e.g. Hyundai" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="name-model">Name / model</label>
+                                <input type="text" name="name-model" id="name-model" placeholder="e.g. Creta" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="model-year">Model year</label>
+                                <input type="number" name="model-year" id="model-year" placeholder="2020" required>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="form-section">
+                        <legend>Specifications</legend>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="fuel-type">Fuel type</label>
+                                <select name="fuel-type" id="fuel-type" required>
+                                    <option value="petrol">Petrol</option>
+                                    <option value="diesel">Diesel</option>
+                                    <option value="cng">CNG</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="transmission-type">Transmission</label>
+                                <select name="transmission-type" id="transmission-type" required>
+                                    <option value="manual">Manual</option>
+                                    <option value="automatic">Automatic</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="engine-capacity">Engine capacity <span class="unit">cc</span></label>
+                                <input type="text" name="engine-capacity" id="engine-capacity" placeholder="1497" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="power">Power <span class="unit">bhp</span></label>
+                                <input type="text" name="power" id="power" placeholder="113" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="mileage">Mileage <span class="unit">kmpl</span></label>
+                                <input type="number" name="mileage" id="mileage" placeholder="17" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="seats">Seats</label>
+                                <input type="number" name="seats" id="seats" placeholder="5" required>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="form-section">
+                        <legend>Condition &amp; listing</legend>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="kilometers-driven">Kilometers driven <span class="unit">km</span></label>
+                                <input type="number" name="kilometers-driven" id="kilometers-driven" placeholder="45000" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="owner-type">Owner type</label>
+                                <input type="text" name="owner-type" id="owner-type" placeholder="First / Second" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="color">Color</label>
+                                <input type="text" name="color" id="color" placeholder="e.g. White" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="location">Location</label>
+                                <input type="text" name="location" id="location" placeholder="City" required>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="form-section">
+                        <legend>Description</legend>
+                        <div class="form-grid">
+                            <div class="form-group form-group--full">
+                                <label for="description">Anything that affects the value?</label>
+                                <textarea name="description" id="description" rows="4"
+                                    placeholder="Service history, condition, accessories, minor damage..." required></textarea>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <button type="submit">Get my estimate</button>
                 </form>
-            </div>
+            </main>
         </div>
     </div>
 </body>
