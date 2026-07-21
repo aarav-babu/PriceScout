@@ -1,104 +1,137 @@
 .landing {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  margin: 28px auto 90px;
-  max-width: 1100px;
-  padding: 70px 32px 130px;
-  border-radius: 28px;
-  color: #eaf4f4;
+  position: relative;
   text-align: center;
-  background:
-    radial-gradient(1200px 400px at 80% -10%, rgba(20, 184, 166, 0.35), transparent),
-    linear-gradient(135deg, var(--navy-800), var(--navy-900));
-  box-shadow: var(--shadow-lg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 96px 24px 40px;
+}
+
+/* Subtle dot-grid backdrop - restrained, not decorative slop */
+.landing::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: radial-gradient(var(--border-strong) 1px, transparent 1px);
+  background-size: 22px 22px;
+  -webkit-mask-image: radial-gradient(ellipse 70% 70% at 50% 30%, #000 30%, transparent 75%);
+  mask-image: radial-gradient(ellipse 70% 70% at 50% 30%, #000 30%, transparent 75%);
+  opacity: 0.5;
+}
+
+.landing::before {
+  content: "AI-powered resale valuations";
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 6px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  margin-bottom: 26px;
 }
 
 .landing h1 {
-  font-size: 56px;
-  margin: 0 0 14px;
-  color: #fff;
-  letter-spacing: -0.02em;
+  font-size: clamp(44px, 7vw, 76px);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  margin: 0 0 20px;
 }
 
 .landing h3 {
-  font-size: 24px;
+  font-size: clamp(18px, 2.4vw, 22px);
   font-weight: 500;
-  margin: 0 auto 18px;
-  max-width: 720px;
-  color: var(--teal-300);
+  color: var(--ink-2);
+  max-width: 640px;
+  margin: 0 auto 16px;
+  letter-spacing: -0.02em;
 }
 
-#landingpara,
+.landing #landingpara,
 .landing p {
-  font-size: 17px;
-  max-width: 760px;
+  font-size: 16px;
+  color: var(--muted);
+  max-width: 620px;
   margin: 0 auto;
-  color: #c7d6e2;
 }
 
 .container {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: 22px;
-  max-width: 1000px;
-  margin: -90px auto 60px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  max-width: var(--maxw);
+  margin: 48px auto 90px;
   padding: 0 24px;
 }
 
 .box {
-  background: var(--card);
+  position: relative;
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 30px 24px;
-  text-align: center;
+  border-radius: var(--r-lg);
+  padding: 24px 22px 26px;
+  text-align: left;
   cursor: pointer;
-  box-shadow: var(--shadow-md);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  overflow: hidden;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.box::after {
+  content: "\2197"; /* up-right arrow */
+  position: absolute;
+  top: 18px;
+  right: 20px;
+  font-size: 16px;
+  color: var(--faint);
+  transition: transform 0.18s ease, color 0.18s ease;
 }
 
 .box:hover {
-  transform: translateY(-6px);
-  box-shadow: var(--shadow-lg);
-  border-color: var(--teal-300);
+  transform: translateY(-3px);
+  border-color: var(--ink);
+  box-shadow: var(--shadow);
 }
+
+.box:hover::after { color: var(--ink); transform: translate(2px, -2px); }
 
 .box h2 {
-  margin: 0 0 6px;
-  font-size: 22px;
+  font-size: 19px;
+  font-weight: 600;
+  margin: 0 0 4px;
+  letter-spacing: -0.02em;
 }
 
-.box p {
-  margin: 0;
-  color: var(--muted);
-}
+.box p { margin: 0; color: var(--muted); font-size: 14px; }
 
 /* JS-driven info popups */
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(11, 31, 47, 0.55);
-  backdrop-filter: blur(2px);
-  z-index: 40;
+  background: rgba(10, 10, 10, 0.45);
+  backdrop-filter: blur(3px);
+  z-index: 60;
 }
 
 .popup {
   position: fixed;
-  background: var(--card);
-  padding: 28px 30px;
-  border-radius: var(--radius);
+  background: var(--surface);
+  padding: 26px 28px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
   box-shadow: var(--shadow-lg);
-  max-width: 480px;
+  max-width: 460px;
   text-align: left;
-  color: var(--text);
-  line-height: 1.6;
+  color: var(--ink-2);
+  line-height: 1.65;
+  font-size: 15px;
   overflow-wrap: break-word;
   opacity: 0;
-  transition: opacity 0.3s ease;
-  z-index: 50;
+  transition: opacity 0.25s ease;
+  z-index: 70;
 }
 
-.popup.active {
-  opacity: 1;
-}
+.popup.active { opacity: 1; }

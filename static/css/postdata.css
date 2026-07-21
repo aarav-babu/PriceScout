@@ -2,88 +2,103 @@
 .laptopformcontainer,
 .mobileformcontainer {
   position: relative;
-  overflow: hidden;
-  min-height: 100vh;
-  z-index: 0;
+  min-height: calc(100vh - 60px);
+  background: var(--bg-subtle);
 }
 
-#bg-video {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  filter: brightness(0.45) saturate(1.1);
-  z-index: -1;
-}
+/* The looping stock video reads as template filler - remove it for focus */
+#bg-video { display: none !important; }
 
 .page {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: 48px 20px 64px;
+  padding: 56px 20px 80px;
 }
 
 .container {
   width: 100%;
-  max-width: 560px;
-  padding: 36px 40px 40px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.97);
-  box-shadow: var(--shadow-lg);
-  backdrop-filter: blur(4px);
+  max-width: 720px;
+  padding: 40px 44px 44px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-sm);
 }
 
 .container h2 {
-  text-align: center;
   font-size: 28px;
-  margin: 0 0 26px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  margin: 0 0 4px;
 }
 
-.form-group {
-  text-align: left;
-  margin-bottom: 18px;
+.container h2::after {
+  content: "Enter the details below for an instant estimate.";
+  display: block;
+  margin-top: 8px;
+  margin-bottom: 26px;
+  font-size: 14.5px;
+  font-weight: 400;
+  color: var(--muted);
+  letter-spacing: -0.01em;
 }
+
+.container form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px 20px;
+}
+
+.form-group { text-align: left; margin: 0; min-width: 0; }
+
+/* Long fields span the full width */
+.form-group:has(textarea) { grid-column: 1 / -1; }
 
 .form-group label {
   display: block;
   margin-bottom: 7px;
-  font-weight: 600;
-  font-size: 14px;
-  color: var(--navy-800);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-2);
+  letter-spacing: -0.01em;
 }
 
 .form-group input,
 .form-group select,
 .form-group textarea {
   width: 100%;
-  padding: 11px 14px;
-  font-size: 15px;
-  font-family: var(--font-body);
-  color: var(--text);
-  background: #fff;
-  border: 1.5px solid var(--border);
-  border-radius: 10px;
+  padding: 10px 13px;
+  font-size: 14.5px;
+  color: var(--ink);
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
+
+.form-group input::placeholder,
+.form-group textarea::placeholder { color: var(--faint); }
 
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: var(--teal);
-  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.18);
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px var(--focus);
 }
 
-.form-group textarea {
-  resize: vertical;
-  min-height: 90px;
-}
+.form-group textarea { resize: vertical; min-height: 92px; }
 
 .container button[type="submit"] {
+  grid-column: 1 / -1;
   width: 100%;
-  margin-top: 8px;
-  padding: 13px;
-  font-size: 16px;
+  margin-top: 6px;
+  padding: 12px;
+  font-size: 15px;
+}
+
+@media (max-width: 560px) {
+  .container { padding: 30px 24px 34px; }
+  .container form { grid-template-columns: 1fr; }
 }
