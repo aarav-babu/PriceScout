@@ -4,11 +4,38 @@ import csv
 import os
 import mysql.connector
 import hashlib
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 import model as mo
 import UserInput as wsi
 # from celery import Celery
 # from celery_worker import call_webscraper 
 # import threading
+
+
+def _env_bool(name, default=False):
+    return os.getenv(name, str(default)).strip().lower() in ("1", "true", "yes", "on")
+
+
+# Database configuration is read from the environment so the app can point at a
+# local MySQL for development or a managed/hosted MySQL in production.
+DB_CONFIG = {
+    "host": os.getenv("DB_HOST", "localhost"),
+    "port": int(os.getenv("DB_PORT", "3306")),
+    "user": os.getenv("DB_USER", "root"),
+    "password": os.getenv("DB_PASSWORD", ""),
+    "database": os.getenv("DB_NAME", "capstone"),
+}
+
+# When live scraping is disabled (the default for hosted deployments), the price
+# estimate is produced by training the model on the bundled market dataset.
+ENABLE_LIVE_SCRAPING = _env_bool("ENABLE_LIVE_SCRAPING", False)
+CACHED_CARS_DATASET = os.getenv("CACHED_CARS_DATASET", "new_cars.csv")
 
 
 def make_hashes(password):
@@ -20,15 +47,37 @@ def check_hashes(password,hashed_text):
   return False
 
 
+# The connection is created lazily and re-established when needed so that the
+# app can boot (and serve the health check) even if the database is temporarily
+# unavailable, which is common on hosted platforms during cold starts.
+mydb = None
+cursor = None
 
-# Configure the MySQL database connection
-mydb = mysql.connector.connect(
-    host = "localhost",
-    user = "root",
-    password = "",
-    database = "capstone",
-)
-cursor = mydb.cursor()
+
+def init_db():
+    global mydb, cursor
+    mydb = mysql.connector.connect(**DB_CONFIG)
+    cursor = mydb.cursor()
+    return mydb
+
+
+def ensure_db():
+    global mydb, cursor
+    if mydb is None:
+        init_db()
+        return
+    try:
+        mydb.ping(reconnect=True, attempts=3, delay=1)
+        if cursor is None:
+            cursor = mydb.cursor()
+    except mysql.connector.Error:
+        init_db()
+
+
+try:
+    init_db()
+except mysql.connector.Error as exc:
+    print(f"[startup] Database not reachable yet: {exc}. Will retry on first request.")
 
 app = Flask(__name__)
 
@@ -41,7 +90,29 @@ app = Flask(__name__)
 
 app.config['STATIC_URL_PATH'] = '/static'
 
-app.secret_key = 'TYhffaithh321'
+app.secret_key = os.getenv("SECRET_KEY", "dev-insecure-change-me")
+
+
+@app.route('/health')
+def health():
+  db_ok = True
+  try:
+    ensure_db()
+    cursor.execute("SELECT 1")
+    cursor.fetchone()
+  except Exception:
+    db_ok = False
+  return {"status": "ok", "database": "up" if db_ok else "down"}, (200 if db_ok else 503)
+
+
+@app.before_request
+def _ensure_db_connection():
+  if request.endpoint == 'health':
+    return
+  try:
+    ensure_db()
+  except mysql.connector.Error:
+    pass
 
 @app.route('/userdata/login', methods=['GET', 'POST'])
 def login():
@@ -355,19 +426,35 @@ def input_query():
 
 
 
+def predict_from_cache(car_details):
+  """Estimate a price without a live browser by training the model on the
+  bundled market dataset. Used as the default path and as a fallback when live
+  scraping is disabled or fails (e.g. on hosted, browserless environments)."""
+  df = pd.read_csv(CACHED_CARS_DATASET)
+  return int(mo.model_call(df, car_details))
+
+
 def call_webscraper():
+  car_details = {}
   if session['post_type'] == 'vehicle':
     keys = ['Brand','Location','Year','Kilometers_Driven','Fuel_Type','Transmission','Owner_Type','Mileage','Engine','Power','Seats','Seller_Comments','Model']
-    car_details = {}
     data = ret_single_data()
-    i = 0
     row = data[0]
-    for key in keys:
+    for i, key in enumerate(keys):
       car_details[key] = row[i]
-      i = i + 1
-  
-  driver=wsi.start_driver()
-  price=wsi.ui_scrape(car_details,driver)
+
+  price = None
+  if ENABLE_LIVE_SCRAPING:
+    try:
+      driver = wsi.start_driver()
+      price = wsi.ui_scrape(car_details, driver)
+    except Exception as exc:
+      print(f"[pricing] Live scraping failed, falling back to cached dataset: {exc}")
+      price = None
+
+  if price is None:
+    price = predict_from_cache(car_details)
+
   pid = get_postid()
   email = get_email()
   enter_price(price,pid,email)
@@ -399,4 +486,8 @@ def testingfile():
    return render_template('/tointegrate/newtemplogin.html')
 
 if __name__ == '__main__':
-  app.run(debug=True)  
+  app.run(
+    host=os.getenv("HOST", "127.0.0.1"),
+    port=int(os.getenv("PORT", "5000")),
+    debug=_env_bool("FLASK_DEBUG", True),
+  )

@@ -1,14 +1,29 @@
+import os
 import mysql.connector
 import UserInput as wsi
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
-mydb2 = mysql.connector.connect(
-    host = "localhost",
-    user = "root",
-    password = "",
-    database = "capstone",
-)
-cursor2 = mydb2.cursor()
+
+DB_CONFIG = {
+    "host": os.getenv("DB_HOST", "localhost"),
+    "port": int(os.getenv("DB_PORT", "3306")),
+    "user": os.getenv("DB_USER", "root"),
+    "password": os.getenv("DB_PASSWORD", ""),
+    "database": os.getenv("DB_NAME", "capstone"),
+}
+
+mydb2 = None
+cursor2 = None
+try:
+    mydb2 = mysql.connector.connect(**DB_CONFIG)
+    cursor2 = mydb2.cursor()
+except mysql.connector.Error as exc:
+    print(f"[runscraper] Database not reachable at import: {exc}")
 
 
 def ret_single_data(post_type,user_id):

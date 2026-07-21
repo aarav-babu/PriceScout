@@ -1,0 +1,25 @@
+# Render Blueprint (https://render.com) - free web service tier.
+# Render does not offer managed MySQL, so provision a free MySQL elsewhere
+# (Railway, Aiven, Clever Cloud, etc.) and set the DB_* env vars below.
+services:
+  - type: web
+    name: pricescout
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ENABLE_LIVE_SCRAPING
+        value: "false"
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: "3306"
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        sync: false

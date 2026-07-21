@@ -9,3 +9,5 @@ joblib
 selenium
 celery
 redis
+gunicorn
+python-dotenv
