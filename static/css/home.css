@@ -1,124 +1,104 @@
-body {
-    margin: 0;
-    padding: 0;
-    font-family: 'Arial', sans-serif;
-    background-color: #f0f0f0;
-    text-align: center;
-}
-
 .landing {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    margin-top: 20px;
-    margin-left: 50px;
-    margin-right: 50px;
-    border-radius: 25px;
-    height: 50vh;
-    color: #eed7d7;
-    background-color: #143851; /* Matching the theme color */
-}
-
-.website-name {
-    font-size: 24px;
-    font-weight: bold;
-    margin-top: 10px;
-    color: #fff; /* Adjusting the text color */
-}
-h1{
-    font-size: 48px;
-    font-family: Copperplate,fantasy, sans-serif;
-}
-
-h3{
-    font-size: 28px;
-    font-family: Copperplate, fantasy, serif;
-}
-#landingpara{
-    font-size: 20px;
-    font-family: 'Courier New', Courier, monospace;
-}
-.container {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-around;
-    align-items: center;
-    margin: 20px auto;
-    max-width: 800px;
-}
-
-.box {
-    flex: 1;
-    max-width: 200px;
-    margin: 10px;
-    margin-top: -80px;
-    padding: 20px;
-    border: 1px solid #12476b; /* Matching the theme color */
-    border-radius: 7px;
-    text-align: center;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    background-color: #fff; /* Matching the theme background color */
-}
-
-.box:hover {
-    background-color: #ecf0f1; /* Lighter background on hover */
-}
-
-/* Remove hyperlink styles */
-.box a {
-    
-    text-decoration: none;
-    color: #000;
-}
-
-/* Add this CSS for the popup */
-.popup {
-    position: absolute;
-    background-color: #fff;
-    border: 1px solid #3498db;
-    border-radius: 7px;
-    padding: 10px;
-    z-index: 1; /* Set the z-index to make sure it appears on top */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin: 28px auto 90px;
+  max-width: 1100px;
+  padding: 70px 32px 130px;
+  border-radius: 28px;
+  color: #eaf4f4;
+  text-align: center;
+  background:
+    radial-gradient(1200px 400px at 80% -10%, rgba(20, 184, 166, 0.35), transparent),
+    linear-gradient(135deg, var(--navy-800), var(--navy-900));
+  box-shadow: var(--shadow-lg);
 }
 
 .landing h1 {
-    font-size: 36px; /* Adjust the font size as needed */
-    font-weight: bold; /* Make the title bold */
-    color: #bfb6b6; /* Change the title color to match the theme */
-    margin-bottom: 20px; /* Add some space below the title */
+  font-size: 56px;
+  margin: 0 0 14px;
+  color: #fff;
+  letter-spacing: -0.02em;
 }
 
-.landing p {
-    font-size: 18px; /* Adjust the font size as needed */
-    color: #e5c5c5; /* Change the text color to a darker shade */
+.landing h3 {
+  font-size: 24px;
+  font-weight: 500;
+  margin: 0 auto 18px;
+  max-width: 720px;
+  color: var(--teal-300);
 }
+
+#landingpara,
+.landing p {
+  font-size: 17px;
+  max-width: 760px;
+  margin: 0 auto;
+  color: #c7d6e2;
+}
+
+.container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 22px;
+  max-width: 1000px;
+  margin: -90px auto 60px;
+  padding: 0 24px;
+}
+
+.box {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 30px 24px;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: var(--shadow-md);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.box:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--teal-300);
+}
+
+.box h2 {
+  margin: 0 0 6px;
+  font-size: 22px;
+}
+
+.box p {
+  margin: 0;
+  color: var(--muted);
+}
+
+/* JS-driven info popups */
 .overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5); /* Adjust the last value for transparency */
-    z-index: 1; /* Set the z-index to be behind the popup */
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 31, 47, 0.55);
+  backdrop-filter: blur(2px);
+  z-index: 40;
 }
 
 .popup {
-    position: fixed;
-    background-color: #fff;
-    padding: 20px;
-    border: 1px solid #ccc;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    max-width: 400px;
-    text-align: left;
-    overflow-wrap: break-word;
-    opacity: 0; /* Initially set opacity to 0 for a fade-in effect */
-    transition: opacity 0.3s ease; /* Add a longer transition for the opacity property */
+  position: fixed;
+  background: var(--card);
+  padding: 28px 30px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  max-width: 480px;
+  text-align: left;
+  color: var(--text);
+  line-height: 1.6;
+  overflow-wrap: break-word;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 50;
 }
 
 .popup.active {
-    opacity: 1; /* Set opacity to 1 to reveal the popup */
-    transition: opacity 0.9s ease; /* Keep the transition duration shorter for appearing */
+  opacity: 1;
 }
