@@ -1,38 +1,69 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-    <title>User Profile</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your valuations | PriceScout</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='/css/theme.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='/css/userprofile.css') }}">
 </head>
 
 <body>
     {% include '/navigbar/navbar.html' %}
-    <div class="user_box">
-        <div class='profile_picture'>
-            <img src="{{ url_for('static', filename='images/pfp.jpg') }}" alt="Description of the image"
-                class="loaded_image">
-        </div>
-        <div class="user_info">
-            <p><strong>Name:</strong> {{ name }}</p>
-            <p><strong>Username:</strong> {{ username }}</p>
-            <p><strong>Email:</strong> {{ email }}</p>
-            <p><strong>Phone No:</strong> {{ number }}</p>
-            <p><strong>Password:</strong> {{ password }}</p>
-        </div>
-    </div>
-    <div class='user_posts'>
-        {% for item in items %}
-        <div class='box'>
-            <p><strong>Type: </strong><span style="text-transform: capitalize;">{{ item.2 }}</span></p>
-            <p><strong>Brand: </strong>{{ item.3 }}</p>
-            <p><strong>Model: </strong>{{ item.4 }}</p>
-            <p><strong>Price: </strong>₹ {{ item.6 }} /- </p>
-            <p><strong>Description: </strong></p>
-            <div class="description">{{ item.5 }}</div>
-        </div>
-        {% endfor %}
+    <div class="profile-page">
+        <header class="profile-hero">
+            <div class="profile_picture">
+                <img src="{{ url_for('static', filename='images/pfp.jpg') }}" alt="Profile" class="loaded_image">
+            </div>
+            <div class="user_info">
+                <span class="eyebrow">Account</span>
+                <h1 class="profile-name">{{ name }}</h1>
+                <div class="profile-meta">
+                    <span>@{{ username }}</span>
+                    <span class="dot-sep">·</span>
+                    <span>{{ email }}</span>
+                    <span class="dot-sep">·</span>
+                    <span>{{ number }}</span>
+                </div>
+            </div>
+        </header>
+
+        <section class="posts-section">
+            <div class="posts-head">
+                <h2>Your valuations</h2>
+                <span class="posts-count">{{ items|length }} item{{ '' if items|length == 1 else 's' }}</span>
+            </div>
+
+            <div class="user_posts">
+                {% for item in items %}
+                <article class="post-card">
+                    <div class="post-card-top">
+                        <div class="post-thumb">
+                            <img src="{{ url_for('static', filename='images/' ~ item[2] ~ 'icon.jpg') }}" alt="{{ item[2] }}">
+                        </div>
+                        <span class="post-badge">{{ item[2] }}</span>
+                    </div>
+                    <h3 class="post-title">{{ item[3] }} {{ item[4] }}</h3>
+                    <p class="post-desc">{{ item[5] }}</p>
+                    <div class="post-foot">
+                        <span class="post-price-label">Estimated value</span>
+                        {% if item[6] is not none %}
+                        <span class="post-price">&#8377;{{ item[6] }}</span>
+                        {% else %}
+                        <span class="post-price pending">Pending</span>
+                        {% endif %}
+                    </div>
+                </article>
+                {% else %}
+                <div class="posts-empty">
+                    <h3>No valuations yet</h3>
+                    <p>Price your first item and it will show up here.</p>
+                    <a class="btn" href="/">Value an item</a>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
     </div>
     <script src="{{ url_for('static', filename='/script/userprofile.js') }}"></script>
 </body>
