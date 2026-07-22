@@ -3,10 +3,9 @@
 Vercel's @vercel/python runtime detects the module-level ``app`` WSGI callable
 and serves it. All routes are rewritten to this function via vercel.json.
 
-Note: live Selenium scraping cannot run on Vercel (no browser), so keep
-ENABLE_LIVE_SCRAPING unset/false there - the app falls back to the bundled
-dataset model. Point DB_* env vars at an external managed MySQL and set
-DATA_DIR=/tmp (the only writable path on Vercel).
+Vercel cannot host persistent Redis/Celery processes, so the included
+configuration keeps PIPELINE_ENABLED=false and uses the bundled vehicle
+fallback. Point DB_* at managed MySQL and set DATA_DIR=/tmp.
 """
 
 import os

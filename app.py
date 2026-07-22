@@ -12,10 +12,6 @@ except ImportError:
     pass
 
 import model as mo
-import UserInput as wsi
-# from celery import Celery
-# from celery_worker import call_webscraper 
-# import threading
 
 
 def _env_bool(name, default=False):
@@ -46,14 +42,11 @@ def _data_path(name):
     return os.path.join(DATA_DIR, name)
 
 
-# When live scraping is disabled (the default for hosted deployments), the price
-# estimate is produced by training the model on the bundled market dataset.
-ENABLE_LIVE_SCRAPING = _env_bool("ENABLE_LIVE_SCRAPING", False)
+# The authorized market-data pipeline runs in Celery workers. Keep it optional
+# so the web process can still run by itself with the bundled vehicle dataset.
+PIPELINE_ENABLED = _env_bool("PIPELINE_ENABLED", False)
 _cached_dataset = os.getenv("CACHED_CARS_DATASET", "new_cars.csv")
 CACHED_CARS_DATASET = _cached_dataset if os.path.isabs(_cached_dataset) else os.path.join(BASE_DIR, _cached_dataset)
-
-# Scraper source used when ENABLE_LIVE_SCRAPING is true (see scrapers.py).
-SCRAPER_SOURCE = os.getenv("SCRAPER_SOURCE", "cars24")
 
 
 def make_hashes(password):
@@ -101,13 +94,6 @@ except mysql.connector.Error as exc:
 
 app = Flask(__name__)
 
-# app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
-# app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
-# celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
-# celery.conf.update(app.config)
-
-
-
 app.config['STATIC_URL_PATH'] = '/static'
 
 app.secret_key = os.getenv("SECRET_KEY", "dev-insecure-change-me")
@@ -116,13 +102,23 @@ app.secret_key = os.getenv("SECRET_KEY", "dev-insecure-change-me")
 @app.route('/health')
 def health():
   db_ok = True
+  pipeline_ok = None
   try:
     ensure_db()
     cursor.execute("SELECT 1")
     cursor.fetchone()
   except Exception:
     db_ok = False
-  return {"status": "ok", "database": "up" if db_ok else "down"}, (200 if db_ok else 503)
+  if PIPELINE_ENABLED:
+    try:
+      from marketplace_providers import provider_status
+      pipeline_ok = provider_status()["ebay"]
+    except Exception:
+      pipeline_ok = False
+  payload = {"status": "ok", "database": "up" if db_ok else "down"}
+  if pipeline_ok is not None:
+    payload["pricing_pipeline"] = "configured" if pipeline_ok else "missing_provider_credentials"
+  return payload, (200 if db_ok else 503)
 
 
 @app.before_request
@@ -133,6 +129,48 @@ def _ensure_db_connection():
     ensure_db()
   except mysql.connector.Error:
     pass
+
+
+def enqueue_pricing(email, post_type, post_id):
+  """Queue pricing without coupling a web request to provider latency."""
+  if not PIPELINE_ENABLED:
+    return None
+  try:
+    from pricing_pipeline import ensure_pipeline_schema, register_query
+    from celery_worker import enqueue_price
+    ensure_pipeline_schema()
+    register_query(post_type, *_price_identity(email, post_type, post_id))
+    cursor.execute(
+      "UPDATE price SET pricing_status = 'queued' "
+      "WHERE email = %s AND post_type = %s AND post_id = %s",
+      (email, post_type, post_id),
+    )
+    mydb.commit()
+    task_id = enqueue_price(email, post_type, post_id)
+    return task_id
+  except Exception as exc:
+    print(f"[pricing] Could not enqueue {post_type}/{post_id}: {exc}")
+    try:
+      cursor.execute(
+        "UPDATE price SET pricing_status = 'pending' "
+        "WHERE email = %s AND post_type = %s AND post_id = %s",
+        (email, post_type, post_id),
+      )
+      mydb.commit()
+    except Exception:
+      pass
+    return None
+
+
+def _price_identity(email, post_type, post_id):
+  cursor.execute(
+    "SELECT brand, model FROM price WHERE email = %s AND post_type = %s AND post_id = %s LIMIT 1",
+    (email, post_type, post_id),
+  )
+  identity = cursor.fetchone()
+  if identity is None:
+    raise ValueError("Price row was not found")
+  return identity
 
 @app.route('/userdata/login', methods=['GET', 'POST'])
 def login():
@@ -225,6 +263,7 @@ def cars():
     #add post type as v
     cursor.execute('INSERT INTO price (email,post_id, post_type, brand, model, description) VALUES (%s, %s, %s, %s, %s, %s)', (data[0], post_id[0],'vehicle', brandcar, name_model, description))
     mydb.commit()
+    enqueue_pricing(data[0], 'vehicle', post_id[0])
 
     create_csv()
     input_query()
@@ -237,9 +276,17 @@ def pricing():
   if 'user_id' not in session:
     return redirect('/userdata/login')
 
+  if PIPELINE_ENABLED:
+    try:
+      from pricing_pipeline import ensure_pipeline_schema
+      ensure_pipeline_schema()
+    except Exception as exc:
+      print(f"[pricing] Pipeline schema unavailable: {exc}")
+
   # Find the user's most recent listing, regardless of what happened this session.
+  status_column = "pricing_status" if PIPELINE_ENABLED else "'pending'"
   cursor.execute(
-    "SELECT post_type, price, CONCAT(Brand, ' ', Model) AS Name FROM price "
+    f"SELECT post_type, price, CONCAT(Brand, ' ', Model) AS Name, post_id, email, {status_column} FROM price "
     "WHERE email IN (SELECT email FROM users WHERE username = %s) "
     "ORDER BY post_id DESC LIMIT 1;",
     (session['user_id'],))
@@ -252,8 +299,11 @@ def pricing():
   post_type = latest[0]
   session['post_type'] = post_type
 
-  # Compute the price if it hasn't been calculated yet (car flow only).
-  if latest[1] is None and post_type == 'vehicle':
+  # The hosted pipeline prices all categories asynchronously. The bundled
+  # vehicle model remains a browserless fallback when workers are disabled.
+  if latest[1] is None and PIPELINE_ENABLED and latest[5] == 'pending':
+    enqueue_pricing(latest[4], post_type, latest[3])
+  elif latest[1] is None and post_type == 'vehicle':
     try:
       call_webscraper()
     except Exception as exc:
@@ -273,8 +323,19 @@ def pricing():
   }
   img_data = img_map.get(post_type, '/static/images/defaultprice.jpg')
 
-  Price = (u"\u20b9" + format(int(result[2]), ',')) if result[2] is not None else 'Estimate pending'
-  return render_template('/postdata/price.html', Name=result[0], Type=result[1], Price=Price, img_data=img_data)
+  currency_symbols = {"INR": u"\u20b9", "USD": "$", "GBP": u"\u00a3", "EUR": u"\u20ac"}
+  currency = os.getenv("TARGET_CURRENCY", "USD").upper() if PIPELINE_ENABLED else "INR"
+  symbol = currency_symbols.get(currency, f"{currency} ")
+  Price = (symbol + format(int(result[2]), ',')) if result[2] is not None else 'Estimate pending'
+  status_message = "Market data is being collected. Refresh shortly." if result[2] is None and PIPELINE_ENABLED else None
+  return render_template(
+    '/postdata/price.html',
+    Name=result[0],
+    Type=result[1],
+    Price=Price,
+    img_data=img_data,
+    status_message=status_message,
+  )
 
 @app.route('/postdata/mobiles', methods = ['GET','POST'])
 def mobiles():
@@ -303,6 +364,7 @@ def mobiles():
       #add post type as m
       cursor.execute('INSERT INTO price (email, brand, model, description, post_id, post_type) VALUES (%s, %s, %s, %s, %s, %s)', (data[0], brand, model_name, description, post_id[0], session['post_type']))
       mydb.commit()
+      enqueue_pricing(data[0], 'mobiles', post_id[0])
 
       create_csv()
       return render_template('index.html')
@@ -335,6 +397,7 @@ def laptops():
       #add post type as l
       cursor.execute('INSERT INTO price (email, brand, model, description, post_id, post_type) VALUES (%s, %s, %s, %s, %s, %s)', (data[0], brandlap, model, description, post_id[0], session['post_type']))
       mydb.commit()
+      enqueue_pricing(data[0], 'laptops', post_id[0])
 
       create_csv()
       return render_template('index.html')
@@ -493,14 +556,17 @@ def input_query():
 
 
 def predict_from_cache(car_details):
-  """Estimate a price without a live browser by training the model on the
-  bundled market dataset. Used as the default path and as a fallback when live
-  scraping is disabled or fails (e.g. on hosted, browserless environments)."""
+  """Estimate a vehicle price from the bundled browserless fallback model."""
   df = pd.read_csv(CACHED_CARS_DATASET)
   return int(mo.model_call(df, car_details))
 
 
 def call_webscraper():
+  """Compatibility wrapper for the bundled vehicle model.
+
+  Network collection is owned by pricing_pipeline/Celery and never runs in the
+  Flask request process.
+  """
   car_details = {}
   if session['post_type'] == 'vehicle':
     keys = ['Brand','Location','Year','Kilometers_Driven','Fuel_Type','Transmission','Owner_Type','Mileage','Engine','Power','Seats','Seller_Comments','Model']
@@ -509,21 +575,7 @@ def call_webscraper():
     for i, key in enumerate(keys):
       car_details[key] = row[i]
 
-  price = None
-  if ENABLE_LIVE_SCRAPING:
-    try:
-      from scrapers import get_scraper
-      df = get_scraper(SCRAPER_SOURCE).scrape(car_details)
-      if df is not None and not df.empty:
-        price = int(mo.model_call(df, car_details))
-      else:
-        print(f"[pricing] Scraper '{SCRAPER_SOURCE}' returned no rows; using cached dataset.")
-    except Exception as exc:
-      print(f"[pricing] Live scraping via '{SCRAPER_SOURCE}' failed, falling back to cached dataset: {exc}")
-      price = None
-
-  if price is None:
-    price = predict_from_cache(car_details)
+  price = predict_from_cache(car_details)
 
   pid = get_postid()
   email = get_email()

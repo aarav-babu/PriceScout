@@ -12,5 +12,5 @@ COPY . .
 
 EXPOSE 5000
 
-# ENABLE_LIVE_SCRAPING defaults to false, so no browser is required in the image.
+# Provider collection uses documented HTTP APIs, so no browser is required.
 CMD ["sh", "-c", "gunicorn app:app --bind 0.0.0.0:${PORT:-5000} --workers 2 --timeout 120"]

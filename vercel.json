@@ -11,7 +11,7 @@
     { "src": "/(.*)", "dest": "api/index.py" }
   ],
   "env": {
-    "ENABLE_LIVE_SCRAPING": "false",
+    "PIPELINE_ENABLED": "false",
     "DATA_DIR": "/tmp"
   }
 }
