@@ -1,66 +1,128 @@
 .navbar {
-    background-color: #05141e;
-    color: #fff;
-    padding: 10px;
-    display: flex;
-    justify-content: space-between;
-    z-index: 2;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  height: 60px;
+  padding: 0 28px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: saturate(180%) blur(12px);
+  -webkit-backdrop-filter: saturate(180%) blur(12px);
+  border-bottom: 1px solid var(--border, #ececec);
 }
 
-.navbar .logo {
-    color: #fff;
-    text-decoration: none;
-    font-weight: bold;
-    font-size: 24px;
+/* Typographic wordmark instead of the raster logo */
+.navbar-brand a {
+  display: inline-flex;
+  align-items: center;
+}
+
+.navbar-brand img {
+  display: none;
+}
+
+.navbar-brand a::before {
+  content: "";
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--accent, #0f6b52);
+  margin-right: 9px;
+}
+
+.navbar-brand a::after {
+  content: "PriceScout";
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 17px;
+  letter-spacing: -0.03em;
+  color: var(--ink, #0a0a0a);
 }
 
 .nav-links {
-    list-style: none;
-    display: flex;
-    align-items: center;
-    margin-right: 20px; /* Adjust the negative margin to center the text more accurately */
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
 }
 
-.nav-links li {
-    margin-right: 20px;
-}
+.nav-links li { position: relative; margin: 0; }
 
 .nav-links a {
-    text-decoration: none;
-    color: #fff;
+  display: inline-block;
+  color: var(--muted, #6b7280);
+  padding: 7px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
 }
 
-.dropdown {
-    position: relative;
+.nav-links a:hover {
+  color: var(--ink, #0a0a0a);
+  background: var(--bg-subtle, #fafafa);
 }
 
 .dropdown-content {
-    display: none;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    background-color: rgba(20, 61, 88, 0.7); /* Use rgba for transparency */
-    padding: 10px;
-    border-radius: 5px; /* Add border-radius for rounded corners */
-    z-index: 3;
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 172px;
+  margin-top: 8px;
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #ececec);
+  padding: 6px;
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg, 0 18px 48px rgba(10, 10, 10, 0.12));
 }
 
-.dropdown-content a {
-    display: block;
-    padding: 5px 0;
+/* Invisible hover bridge so moving the cursor from the trigger to the menu
+   does not pass through a dead zone and close the dropdown. */
+.dropdown-content::before {
+  content: "";
+  position: absolute;
+  top: -10px;
+  left: 0;
+  right: 0;
+  height: 10px;
 }
 
-.dropdown:hover .dropdown-content {
-    display: block;
-}
+.dropdown-content a { display: block; padding: 8px 12px; border-radius: 8px; }
+.dropdown-content a:hover { background: var(--bg-subtle, #fafafa); color: var(--ink, #0a0a0a); }
 
-.user-menu {
-    display: flex;
-    align-items: center;
-}
+.dropdown:hover .dropdown-content,
+.dropdown:focus-within .dropdown-content { display: block; }
+
+.user-menu { display: flex; align-items: center; gap: 8px; }
 
 .user-menu a {
-    text-decoration: none;
-    color: #fff;
-    margin-left: 10px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 8px 15px;
+  border-radius: 8px;
+  transition: transform 0.12s ease, background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
+
+/* First action = quiet/secondary, last action = solid primary */
+.user-menu a:first-child {
+  color: var(--muted, #6b7280);
+}
+.user-menu a:first-child:hover {
+  color: var(--ink, #0a0a0a);
+  background: var(--bg-subtle, #fafafa);
+}
+
+.user-menu a:last-child {
+  color: #fff;
+  background: var(--ink, #0a0a0a);
+  border: 1px solid var(--ink, #0a0a0a);
+}
+.user-menu a:last-child:hover { background: #2b2b2b; transform: translateY(-1px); }

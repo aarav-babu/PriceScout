@@ -4,11 +4,56 @@ import csv
 import os
 import mysql.connector
 import hashlib
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 import model as mo
 import UserInput as wsi
 # from celery import Celery
 # from celery_worker import call_webscraper 
 # import threading
+
+
+def _env_bool(name, default=False):
+    return os.getenv(name, str(default)).strip().lower() in ("1", "true", "yes", "on")
+
+
+# Database configuration is read from the environment so the app can point at a
+# local MySQL for development or a managed/hosted MySQL in production.
+DB_CONFIG = {
+    "host": os.getenv("DB_HOST", "localhost"),
+    "port": int(os.getenv("DB_PORT", "3306")),
+    "user": os.getenv("DB_USER", "root"),
+    "password": os.getenv("DB_PASSWORD", ""),
+    "database": os.getenv("DB_NAME", "capstone"),
+}
+
+# Absolute base dir of the app so bundled data (datasets, templates) resolve
+# correctly regardless of the current working directory (e.g. on serverless).
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Writable directory for the per-post CSV logs. On platforms with a read-only
+# app filesystem (Vercel/Netlify functions) point this at a writable path such
+# as /tmp via the DATA_DIR env var.
+DATA_DIR = os.getenv("DATA_DIR", BASE_DIR)
+
+
+def _data_path(name):
+    return os.path.join(DATA_DIR, name)
+
+
+# When live scraping is disabled (the default for hosted deployments), the price
+# estimate is produced by training the model on the bundled market dataset.
+ENABLE_LIVE_SCRAPING = _env_bool("ENABLE_LIVE_SCRAPING", False)
+_cached_dataset = os.getenv("CACHED_CARS_DATASET", "new_cars.csv")
+CACHED_CARS_DATASET = _cached_dataset if os.path.isabs(_cached_dataset) else os.path.join(BASE_DIR, _cached_dataset)
+
+# Scraper source used when ENABLE_LIVE_SCRAPING is true (see scrapers.py).
+SCRAPER_SOURCE = os.getenv("SCRAPER_SOURCE", "cars24")
 
 
 def make_hashes(password):
@@ -20,15 +65,39 @@ def check_hashes(password,hashed_text):
   return False
 
 
+# The connection is created lazily and re-established when needed so that the
+# app can boot (and serve the health check) even if the database is temporarily
+# unavailable, which is common on hosted platforms during cold starts.
+mydb = None
+cursor = None
 
-# Configure the MySQL database connection
-mydb = mysql.connector.connect(
-    host = "localhost",
-    user = "root",
-    password = "",
-    database = "capstone",
-)
-cursor = mydb.cursor()
+
+def init_db():
+    global mydb, cursor
+    mydb = mysql.connector.connect(**DB_CONFIG)
+    # Buffered cursors fully read each result set, avoiding "Unread result
+    # found" errors when a query is issued before a prior result is drained.
+    cursor = mydb.cursor(buffered=True)
+    return mydb
+
+
+def ensure_db():
+    global mydb, cursor
+    if mydb is None:
+        init_db()
+        return
+    try:
+        mydb.ping(reconnect=True, attempts=3, delay=1)
+        if cursor is None:
+            cursor = mydb.cursor(buffered=True)
+    except mysql.connector.Error:
+        init_db()
+
+
+try:
+    init_db()
+except mysql.connector.Error as exc:
+    print(f"[startup] Database not reachable yet: {exc}. Will retry on first request.")
 
 app = Flask(__name__)
 
@@ -41,7 +110,29 @@ app = Flask(__name__)
 
 app.config['STATIC_URL_PATH'] = '/static'
 
-app.secret_key = 'TYhffaithh321'
+app.secret_key = os.getenv("SECRET_KEY", "dev-insecure-change-me")
+
+
+@app.route('/health')
+def health():
+  db_ok = True
+  try:
+    ensure_db()
+    cursor.execute("SELECT 1")
+    cursor.fetchone()
+  except Exception:
+    db_ok = False
+  return {"status": "ok", "database": "up" if db_ok else "down"}, (200 if db_ok else 503)
+
+
+@app.before_request
+def _ensure_db_connection():
+  if request.endpoint == 'health':
+    return
+  try:
+    ensure_db()
+  except mysql.connector.Error:
+    pass
 
 @app.route('/userdata/login', methods=['GET', 'POST'])
 def login():
@@ -143,28 +234,47 @@ def cars():
 
 @app.route('/postdata/price',methods = ['GET','POST'])
 def pricing():
-  if session['post_type'] == None:
-    return render_template('index.html', alert_message = True)
-  else:
-    call_webscraper()
-    cursor.execute("SELECT CONCAT(Brand, ' ', Model) AS Name, post_type, price FROM price WHERE email IN (SELECT email FROM users WHERE username = %s) ORDER BY post_id DESC LIMIT 1;",(session['user_id'],))
-    result = cursor.fetchone()
-    img_data = ''
-    print(result)
-    if session['post_type'] == 'vehicle':
-      img_data = '/static/images/vehicleicon.jpg'
-    elif session['post_type'] == 'mobiles':
-       img_data = '/static/images/mobilesicon.jpg'
-    elif session['post_type'] == 'laptops':
-       img_data = '/static/images/laptopsicon.jpg'
-    else:
-       img_data = '/static/images/defaultprice.jpg'
-    
-    if result[2] == None:
-       Price = 'Calculating Price Please check in a while'
-    else:
-       Price = result[2]   
-    return render_template('/postdata/price.html',Name = result[0], Type = result[1], Price = Price,img_data = img_data)
+  if 'user_id' not in session:
+    return redirect('/userdata/login')
+
+  # Find the user's most recent listing, regardless of what happened this session.
+  cursor.execute(
+    "SELECT post_type, price, CONCAT(Brand, ' ', Model) AS Name FROM price "
+    "WHERE email IN (SELECT email FROM users WHERE username = %s) "
+    "ORDER BY post_id DESC LIMIT 1;",
+    (session['user_id'],))
+  latest = cursor.fetchone()
+
+  if latest is None:
+    # No listings yet - show a friendly empty state instead of an alert/500.
+    return render_template('/postdata/price.html', empty=True)
+
+  post_type = latest[0]
+  session['post_type'] = post_type
+
+  # Compute the price if it hasn't been calculated yet (car flow only).
+  if latest[1] is None and post_type == 'vehicle':
+    try:
+      call_webscraper()
+    except Exception as exc:
+      print(f"[pricing] Could not compute price: {exc}")
+
+  cursor.execute(
+    "SELECT CONCAT(Brand, ' ', Model) AS Name, post_type, price FROM price "
+    "WHERE email IN (SELECT email FROM users WHERE username = %s) "
+    "ORDER BY post_id DESC LIMIT 1;",
+    (session['user_id'],))
+  result = cursor.fetchone()
+
+  img_map = {
+    'vehicle': '/static/images/vehicleicon.jpg',
+    'mobiles': '/static/images/mobilesicon.jpg',
+    'laptops': '/static/images/laptopsicon.jpg',
+  }
+  img_data = img_map.get(post_type, '/static/images/defaultprice.jpg')
+
+  Price = (u"\u20b9" + format(int(result[2]), ',')) if result[2] is not None else 'Estimate pending'
+  return render_template('/postdata/price.html', Name=result[0], Type=result[1], Price=Price, img_data=img_data)
 
 @app.route('/postdata/mobiles', methods = ['GET','POST'])
 def mobiles():
@@ -230,14 +340,55 @@ def laptops():
       return render_template('index.html')
     return render_template('/postdata/laptops.html')
 
+def _item_details(post_type, post_id):
+    """Return an ordered list of {label, value} spec rows for a listing so the
+    profile can show a full detail pop-out."""
+    specs = []
+    try:
+        if post_type == 'vehicle':
+            cursor.execute("SELECT vehicle_type, model_year, km_driven, mileage, fuel_type, transmission, owner_type, engine_capacity, power, seats, color, location FROM vehicle WHERE post_id = %s", (post_id,))
+            labels = ['Vehicle type', 'Model year', 'KM driven', 'Mileage (kmpl)', 'Fuel type', 'Transmission', 'Owner type', 'Engine (cc)', 'Power (bhp)', 'Seats', 'Color', 'Location']
+        elif post_type == 'mobiles':
+            cursor.execute("SELECT sim_slots, processor, ram, storage_size, battery_size, display, camera FROM mobiles WHERE post_id = %s", (post_id,))
+            labels = ['SIM slots', 'Processor', 'RAM (GB)', 'Storage (GB)', 'Battery (mAh)', 'Display', 'Camera']
+        elif post_type == 'laptops':
+            cursor.execute("SELECT processor, ram_size, memory_type, memory_size, display_size, refresh_rate, battery, laptop_type FROM laptops WHERE post_id = %s", (post_id,))
+            labels = ['Processor', 'RAM (GB)', 'Storage type', 'Storage size (GB)', 'Display (in)', 'Refresh rate (Hz)', 'Battery (Wh)', 'Type']
+        else:
+            return specs
+        row = cursor.fetchone()
+        if row:
+            for label, value in zip(labels, row):
+                if value is not None and str(value).strip() != '':
+                    specs.append({'label': label, 'value': value})
+    except Exception as exc:
+        print(f"[userprofile] details fetch failed: {exc}")
+    return specs
+
+
 @app.route('/userdata/userprofile', methods = ['GET','POST'])
 def userprofile():
+    if 'user_id' not in session:
+        return redirect('/userdata/login')
     data = get_user_data(session['user_id'])
-    
-    cursor.execute("SELECT * FROM price where email in (SELECT email from users where username = %s)",(session['user_id'],))
-    result = cursor.fetchall()
-   
-    return render_template('/userdata/userprofile.html',username = data[0],name = data[1], email = data[2], number = data[3], password = data[4],items = result, post_type_img = 'pfp')
+    if data is None:
+        return redirect('/userdata/login')
+
+    cursor.execute("SELECT * FROM price where email in (SELECT email from users where username = %s) ORDER BY post_id DESC",(session['user_id'],))
+    rows = cursor.fetchall()
+    items = []
+    for r in rows:
+        # price row columns: email, post_id, post_type, brand, model, description, price
+        items.append({
+            'post_type': r[2],
+            'brand': r[3],
+            'model': r[4],
+            'description': r[5],
+            'price': r[6],
+            'details': _item_details(r[2], r[1]),
+        })
+
+    return render_template('/userdata/userprofile.html', username=data[0], name=data[1], email=data[2], number=data[3], password=data[4], items=items, post_type_img='pfp')
 
 @app.route('/misc/about', methods = ['GET','POST'])
 def about():
@@ -294,80 +445,86 @@ def ret_single_data():
       data = cursor.fetchall()
   return data
 #INSERT INTO price  WHERE email IN (SELECT email FROM users WHERE username = 'aarav') AND post_type = 'vehicles' AND post_id IN (SELECT post_id FROM vehicles WHERE user_email = 'aaravbabu2002@gmail.com' ORDER BY post_id DESC LIMIT 1) 
-def create_csv ():
+CSV_HEADERS = {
+  'vehicle': ['post_id', 'user_email', 'brand', 'model', 'location', 'vehicle_type', 'model_year', 'color', 'km_driven', 'mileage', 'fuel_type', 'transmission', 'owner_type', 'engine_capacity', 'power', 'seats', 'description'],
+  'mobiles': ['post_id', 'email', 'brand', 'model_name', 'sim_slots', 'processor', 'ram', 'storage_size', 'battery_size', 'display', 'camera', 'description'],
+  'laptops': ['post_id', 'email', 'brandlap', 'model', 'processor', 'ram_size', 'memory_type', 'memory_size', 'display_size', 'refresh_rate', 'battery', 'laptop_type', 'description'],
+}
+
+
+def create_csv():
+  """Append the latest post to a CSV log. Best-effort: on a read-only
+  filesystem (serverless) this is skipped without failing the request."""
+  post_type = session['post_type']
+  filename = {'vehicle': 'vehicles.csv', 'mobiles': 'mobiles.csv', 'laptops': 'laptops.csv'}.get(post_type)
+  if not filename:
+    return
   data = ret_db_data()
-  if session ['post_type'] == 'vehicle':
-    if not os.path.exists('vehicles.csv'):
-      with open('vehicles.csv', 'w', newline='') as f:
-        writer = csv.writer(f)
-        writer.writerow(['post_id','user_email' , 'brand', 'model','location','vehicle_type', 'model_year', 'color', 'km_driven','mileage' 'fuel_type', 'transmission', 'owner_type', 'engine_capacity', 'power', 'seats', 'description'])
-        f.close()
-        # Create a CSV writer object
-    with open('vehicles.csv', 'a', newline='') as g:
-      writer = csv.writer(g)
-      # Write each row of data to the CSV file
-      #for row in data[len(data)-1]:
-      writer.writerow(data[len(data)-1])
-      g.close()
-
-  elif session ['post_type'] == 'mobiles':
-    if not os.path.exists('mobiles.csv'):
-      with open('mobiles.csv', 'w', newline='') as f:
-        writer = csv.writer(f)
-        writer.writerow(['post_id','email', 'brand', 'model_name', 'sim_slots', 'processor', 'ram', 'storage_size', 'battery_size', 'display', 'camera', 'description'])
-        f.close()
-        # Write each row of data to the CSV file
-    with open('mobiles.csv', 'a', newline='') as g:
-      writer = csv.writer(g)
-      # Write each row of data to the CSV file
-      #for row in data[len(data)-1]:
-      writer.writerow(data[len(data)-1])
-      g.close()
-
-  elif session ['post_type'] == 'laptops':
-    if not os.path.exists('laptops.csv'):
-      with open('laptops.csv', 'w', newline='') as f:
-        writer = csv.writer(f)
-        # Write the header row
-        writer.writerow(['post_id','email', 'brandlap', 'model', 'processor', 'ram_size', 'memory_type', 'memory_size', 'display_size', 'refresh_rate', 'battery', 'laptop_type', 'description'])
-        f.close()
-    # Write each row of data to the CSV file
-    with open('laptops.csv', 'a', newline='') as g:
-      writer = csv.writer(g)
-      # Write each row of data to the CSV file
-      #for row in data[len(data)-1]:
-      writer.writerow(data[len(data)-1])
-      g.close()
+  path = _data_path(filename)
+  try:
+    if not os.path.exists(path):
+      with open(path, 'w', newline='') as f:
+        csv.writer(f).writerow(CSV_HEADERS[post_type])
+    with open(path, 'a', newline='') as g:
+      csv.writer(g).writerow(data[len(data) - 1])
+  except OSError as exc:
+    print(f"[create_csv] Skipping CSV log write ({path}): {exc}")
 
 
 def input_query():
-    if session['post_type'] == "vehicle":
-        df = pd.read_csv("vehicles.csv")
-        input_query = df.query("brand != '' and model != ''").apply(lambda row: f"{row['brand']} {row['model']}", axis=1)
-    elif session['post_type'] == "mobiles":
-        df = pd.read_csv("mobiles.csv")
-        input_query = df.query("brand != '' and model_name != ''").apply(lambda row: f"{row['brand']} {row['model_name']}", axis=1)
-    elif session['post_type'] == "laptops":
-        df = pd.read_csv("laptops.csv")
-        input_query = df.query("brandlap != '' and model != ''").apply(lambda row: f"{row['brandlap']} {row['model']}", axis=1)
-    x = len(input_query)
-    return input_query[x-1]
+    try:
+        if session['post_type'] == "vehicle":
+            df = pd.read_csv(_data_path("vehicles.csv"))
+            input_query = df.query("brand != '' and model != ''").apply(lambda row: f"{row['brand']} {row['model']}", axis=1)
+        elif session['post_type'] == "mobiles":
+            df = pd.read_csv(_data_path("mobiles.csv"))
+            input_query = df.query("brand != '' and model_name != ''").apply(lambda row: f"{row['brand']} {row['model_name']}", axis=1)
+        elif session['post_type'] == "laptops":
+            df = pd.read_csv(_data_path("laptops.csv"))
+            input_query = df.query("brandlap != '' and model != ''").apply(lambda row: f"{row['brandlap']} {row['model']}", axis=1)
+        else:
+            return None
+        x = len(input_query)
+        return input_query[x-1]
+    except (OSError, KeyError, IndexError) as exc:
+        print(f"[input_query] Skipped ({exc})")
+        return None
 
+
+
+def predict_from_cache(car_details):
+  """Estimate a price without a live browser by training the model on the
+  bundled market dataset. Used as the default path and as a fallback when live
+  scraping is disabled or fails (e.g. on hosted, browserless environments)."""
+  df = pd.read_csv(CACHED_CARS_DATASET)
+  return int(mo.model_call(df, car_details))
 
 
 def call_webscraper():
+  car_details = {}
   if session['post_type'] == 'vehicle':
     keys = ['Brand','Location','Year','Kilometers_Driven','Fuel_Type','Transmission','Owner_Type','Mileage','Engine','Power','Seats','Seller_Comments','Model']
-    car_details = {}
     data = ret_single_data()
-    i = 0
     row = data[0]
-    for key in keys:
+    for i, key in enumerate(keys):
       car_details[key] = row[i]
-      i = i + 1
-  
-  driver=wsi.start_driver()
-  price=wsi.ui_scrape(car_details,driver)
+
+  price = None
+  if ENABLE_LIVE_SCRAPING:
+    try:
+      from scrapers import get_scraper
+      df = get_scraper(SCRAPER_SOURCE).scrape(car_details)
+      if df is not None and not df.empty:
+        price = int(mo.model_call(df, car_details))
+      else:
+        print(f"[pricing] Scraper '{SCRAPER_SOURCE}' returned no rows; using cached dataset.")
+    except Exception as exc:
+      print(f"[pricing] Live scraping via '{SCRAPER_SOURCE}' failed, falling back to cached dataset: {exc}")
+      price = None
+
+  if price is None:
+    price = predict_from_cache(car_details)
+
   pid = get_postid()
   email = get_email()
   enter_price(price,pid,email)
@@ -399,4 +556,8 @@ def testingfile():
    return render_template('/tointegrate/newtemplogin.html')
 
 if __name__ == '__main__':
-  app.run(debug=True)  
+  app.run(
+    host=os.getenv("HOST", "127.0.0.1"),
+    port=int(os.getenv("PORT", "5000")),
+    debug=_env_bool("FLASK_DEBUG", True),
+  )
