@@ -1,155 +1,105 @@
 # PriceScout
 
-PriceScout estimates resale prices for **mobile phones**, **laptops**, and **vehicles** using machine learning trained on comparable market listings. Users can sign up, submit item details, and receive a valuation backed by a scikit-learn model.
+PriceScout is a Flask app that estimates resale prices for vehicles, mobile
+phones, and laptops. It stores accounts and valuations in MySQL/MariaDB and
+uses an asynchronous market-data and model-training pipeline for hosted use.
 
-The app is built with **Flask**, stores data in **MySQL/MariaDB**, and is configured entirely through environment variables so it runs the same way locally, in Docker, or on hosted platforms such as Vercel and Render.
+## What it includes
 
-## Features
+- Guided valuation forms and saved valuation history
+- Authorized active-listing collection through eBay's official Browse API
+- NHTSA vPIC vehicle metadata client
+- Demand-driven, volatility-adaptive collection schedules
+- Versioned scikit-learn models stored in MariaDB
+- Redis/Celery workers so external API calls and training never block Flask
+- A bundled, browserless vehicle fallback when the pipeline is disabled
+- `/health` endpoint for deployment checks
 
-- Guided valuation forms for cars, mobiles, and laptops
-- User accounts with saved valuation history
-- Vehicle price estimates via a trained regression model (mobile/laptop pricing is stored but not yet modeled)
-- Pluggable live scraping sources when running on a machine with a browser (optional)
-- Health check endpoint at `/health` for deploy monitoring
+PriceScout does not ship Selenium or automate Cars24, Facebook Marketplace,
+Craigslist, logins, CAPTCHAs, or undocumented endpoints. Read
+[DATA_SOURCES.md](DATA_SOURCES.md) before enabling a provider.
 
-## Requirements
+## Quick start
 
-- **Python 3.10+**
-- **MySQL or MariaDB** (local install, Docker, or a managed host)
-- **Firefox** — only if you enable live scraping (`ENABLE_LIVE_SCRAPING=true`)
-
-Selenium, Celery, and Redis are optional dependencies used only for live scraping and the legacy background worker; they are not needed for the default, browserless flow.
-
-## Local setup
-
-### 1. Clone and install dependencies
-
-```bash
-git clone <repo-url>
-cd PriceScout
-python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt
-```
-
-### 2. Configure environment
+The complete pipeline is easiest to run with Docker:
 
 ```bash
 cp .env.example .env
-```
-
-Edit `.env` as needed. The defaults target a local database at `localhost:3306` with user `root`, an empty password, and database `capstone`.
-
-### 3. Set up the database
-
-**Option A — existing local MySQL/MariaDB**
-
-```bash
-mysql -u root -e "CREATE DATABASE IF NOT EXISTS capstone;"
-mysql -u root capstone < capstone.sql
-```
-
-**Option B — Docker Compose (app + database together)**
-
-```bash
-cp .env.example .env   # optional: adjust values
+# Add a strong SECRET_KEY and approved provider credentials.
 docker compose up --build
 ```
 
-This starts MariaDB (schema imported from `capstone.sql` on first boot) and the web app. Open http://localhost:5000.
+This starts Flask, MariaDB, Redis, a Celery worker, and Celery Beat. Open
+http://localhost:5000 and check http://localhost:5000/health.
 
-### 4. Run the app
+To run only the browserless Flask fallback:
 
 ```bash
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+cp .env.example .env
+mysql -u root -e "CREATE DATABASE IF NOT EXISTS capstone;"
+mysql -u root capstone < capstone.sql
 .venv/bin/python app.py
 ```
 
-The dev server listens on http://127.0.0.1:5000 by default (`HOST` / `PORT` in `.env`). Confirm it is up:
+The fallback prices vehicles from `new_cars.csv`; mobile and laptop estimates
+remain pending until the hosted pipeline has authorized market data.
 
-```bash
-curl http://127.0.0.1:5000/health
-```
+## Pipeline
 
-You should see JSON with `"status": "ok"` and a `"database"` field (`"up"` when MySQL is reachable).
+When a user submits an item, Flask registers one deduplicated brand/model query
+and queues a pricing job. The worker uses fresh exact comparables when
+available, otherwise collects from configured providers. Celery Beat:
 
-### Optional: live scraping
+- checks due queries every 15 minutes;
+- trains and activates a model every six hours when enough valid observations
+  exist;
+- deletes observations after the configured contractual retention window.
 
-By default, `ENABLE_LIVE_SCRAPING=false`. Vehicle prices are estimated by training the model on the bundled dataset (`new_cars.csv`) — no browser required.
+Collection intervals are bounded by category and shorten when recent batch
+median prices move more. Default baselines are six hours for mobiles and
+twelve hours for vehicles and laptops.
 
-To scrape live listings instead (local development only):
+The model learns active asking prices, not completed-sale or guaranteed
+trade-in values. Marketplace geography and `TARGET_CURRENCY` must match.
 
-1. Install [Firefox](https://www.mozilla.org/firefox/).
-2. In `.env`, set `ENABLE_LIVE_SCRAPING=true` and optionally `SCRAPER_SOURCE=cars24` or `facebook_marketplace`.
-3. Read the [Web scraping ethics](#web-scraping-ethics) section before enabling this.
+## Main configuration
 
-If live scraping fails or returns no rows, the app automatically falls back to the cached dataset.
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `PIPELINE_ENABLED` | `false` | Queue API collection and pricing jobs |
+| `CELERY_BROKER_URL` | local Redis | Celery broker |
+| `EBAY_CLIENT_ID` / `EBAY_CLIENT_SECRET` | empty | Official Browse API credentials |
+| `EBAY_MARKETPLACE_ID` | `EBAY_US` | Listing market |
+| `TARGET_CURRENCY` | `USD` | Accepted and displayed market currency |
+| `OBSERVATION_RETENTION_DAYS` | `7` | Raw observation retention ceiling |
+| `MODEL_MINIMUM_ROWS` | `25` | Minimum rows before model activation |
+| `CACHED_CARS_DATASET` | `new_cars.csv` | Vehicle fallback dataset |
+
+See `.env.example` for cadence bounds and all database/server settings.
 
 ## Deployment
 
-PriceScout is ready for hosted environments. All configuration is env-driven; see `.env.example` for the full list.
-
-| Platform | Notes |
-| --- | --- |
-| **Vercel** | Serverless Python via `api/index.py` and `vercel.json`. Requires an external MySQL. Live scraping is disabled by default (no browser on serverless). |
-| **Docker Compose** | Easiest full-stack local or self-hosted run — app + MariaDB with auto schema import. |
-| **Render** | Persistent web service; use `render.yaml` and an external MySQL. |
-| **Netlify** | Netlify Functions do **not** support Python/Flask. Host the API on Vercel or Render instead. |
-
-Step-by-step deploy instructions, free MySQL provider suggestions, and the environment variable reference are in **[DEPLOY.md](DEPLOY.md)**.
-
-Production serving uses Gunicorn (`gunicorn app:app` — see `Procfile` and `Dockerfile`).
-
-## Environment variables
-
-| Variable | Default | Description |
-| --- | --- | --- |
-| `DB_HOST` | `localhost` | Database host |
-| `DB_PORT` | `3306` | Database port |
-| `DB_USER` | `root` | Database user |
-| `DB_PASSWORD` | (empty) | Database password |
-| `DB_NAME` | `capstone` | Database name |
-| `SECRET_KEY` | `dev-insecure-change-me` | Flask session secret — set a strong value in production |
-| `ENABLE_LIVE_SCRAPING` | `false` | Use live Selenium scraping instead of the bundled dataset |
-| `SCRAPER_SOURCE` | `cars24` | Live scraper: `cars24` or `facebook_marketplace` |
-| `CACHED_CARS_DATASET` | `new_cars.csv` | Dataset used when live scraping is off |
-| `SELENIUM_HEADLESS` | `true` | Run Firefox headless when live scraping is enabled |
-| `DATA_DIR` | app directory | Writable directory for CSV logs; use `/tmp` on serverless hosts |
-| `HOST` / `PORT` | `127.0.0.1` / `5000` | Dev server bind address |
-
-## Web scraping ethics
-
-PriceScout can optionally fetch comparable listings from third-party marketplaces to refresh training data. **Live scraping is off by default** and is intended for local development or environments you control — not for unattended production scraping without explicit permission.
-
-Before enabling `ENABLE_LIVE_SCRAPING=true`, please:
-
-1. **Read the site's Terms of Service and `robots.txt`.** Only scrape sources that permit automated access for your use case. If a site prohibits scraping, do not enable live scraping against it.
-2. **Respect rate limits and server load.** The bundled scrapers include basic delays; do not remove them or run aggressive parallel jobs against production sites.
-3. **Use data responsibly.** Listing data may include personal or commercial information. Store only what you need for valuation, do not republish scraped content, and comply with applicable privacy laws.
-4. **Prefer the bundled dataset for demos and hosting.** The default path (`ENABLE_LIVE_SCRAPING=false`) trains on `new_cars.csv` and works on browserless hosts (Vercel, Render, etc.) without touching external sites.
-5. **Treat experimental sources with caution.** The Facebook Marketplace scraper (`SCRAPER_SOURCE=facebook_marketplace`) is unverified: Facebook requires login, restricts automated access, and may block requests. It is provided as a starting point for research, not as a supported production integration.
-6. **Attribute and comply.** PriceScout started as an academic capstone project ([IEEE paper](https://ieeexplore.ieee.org/document/10574547)). If you extend scraping for research or publication, document your sources and methods and follow your institution's ethics guidelines.
-
-Adding a new scraper: subclass `BaseScraper` in `scrapers.py`, register it in `REGISTRY`, and document any site-specific restrictions in your fork's README.
+The full pipeline requires persistent web, worker, scheduler, Redis, and
+MariaDB services. [DEPLOY.md](DEPLOY.md) documents Docker and split-service
+hosting. Vercel and the included Render web blueprint run fallback mode unless
+external workers and Redis are configured.
 
 ## Project structure
 
-```
-app.py              Flask routes and pricing orchestration
-model.py            scikit-learn training and prediction
-scrapers.py         Pluggable live scraping sources
-UserInput.py        Selenium helpers for Cars24 (live mode)
-capstone.sql        Database schema
-new_cars.csv        Bundled vehicle market dataset
-api/index.py        Vercel WSGI entrypoint
-templates/          HTML templates
-static/             CSS and client-side scripts
+```text
+app.py                     Flask routes and queue integration
+marketplace_providers.py   Authorized API clients
+pricing_pipeline.py        Collection, retention, scheduling, and inference
+market_model.py            Versioned cross-category model
+celery_worker.py           Worker tasks and Beat schedule
+model.py                   Bundled vehicle fallback model
+capstone.sql               Application and pipeline schema
 ```
 
-## Development notes
+Basic verification:
 
-- Syntax check: `.venv/bin/python -m py_compile *.py`
-- The pricing model currently covers **vehicles/cars** only; mobiles and laptops persist submissions but do not yet return ML estimates.
-- Optional Celery worker (`celery_worker.py`, `runscraper.py`) is not used by the default request flow.
-
-## License
-
-See repository license file if present.
+```bash
+.venv/bin/python -m py_compile *.py api/*.py
+```

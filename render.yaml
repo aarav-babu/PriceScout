@@ -11,7 +11,7 @@ services:
     envVars:
       - key: SECRET_KEY
         generateValue: true
-      - key: ENABLE_LIVE_SCRAPING
+      - key: PIPELINE_ENABLED
         value: "false"
       - key: DB_HOST
         sync: false
