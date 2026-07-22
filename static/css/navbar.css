@@ -72,9 +72,10 @@
 .dropdown-content {
   display: none;
   position: absolute;
-  top: 130%;
+  top: 100%;
   left: 0;
   min-width: 172px;
+  margin-top: 8px;
   background: var(--surface, #fff);
   border: 1px solid var(--border, #ececec);
   padding: 6px;
@@ -82,9 +83,22 @@
   box-shadow: var(--shadow-lg, 0 18px 48px rgba(10, 10, 10, 0.12));
 }
 
-.dropdown-content a { display: block; padding: 8px 12px; border-radius: 8px; }
+/* Invisible hover bridge so moving the cursor from the trigger to the menu
+   does not pass through a dead zone and close the dropdown. */
+.dropdown-content::before {
+  content: "";
+  position: absolute;
+  top: -10px;
+  left: 0;
+  right: 0;
+  height: 10px;
+}
 
-.dropdown:hover .dropdown-content { display: block; }
+.dropdown-content a { display: block; padding: 8px 12px; border-radius: 8px; }
+.dropdown-content a:hover { background: var(--bg-subtle, #fafafa); color: var(--ink, #0a0a0a); }
+
+.dropdown:hover .dropdown-content,
+.dropdown:focus-within .dropdown-content { display: block; }
 
 .user-menu { display: flex; align-items: center; gap: 8px; }
 
