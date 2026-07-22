@@ -102,4 +102,5 @@ Basic verification:
 
 ```bash
 .venv/bin/python -m py_compile *.py api/*.py
+.venv/bin/python -m unittest discover -s tests -v
 ```
