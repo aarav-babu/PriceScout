@@ -7,7 +7,7 @@
 .content {
   border: 1px solid var(--border);
   border-radius: var(--r-xl);
-  padding: 40px 40px 44px;
+  padding: 40px 40px 36px;
   background: var(--surface);
   box-shadow: var(--shadow);
   text-align: center;
@@ -20,31 +20,48 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
-  margin: 0 0 22px;
+  margin: 0 0 18px;
 }
 
-.product-details p {
-  margin: 8px 0;
-  font-size: 15px;
-  color: var(--ink-2);
+.pd-name {
+  font-family: var(--font-sans);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin: 0 0 10px;
 }
 
-.product-details p strong { color: var(--muted); font-weight: 500; margin-right: 4px; }
+.pd-type {
+  margin: 0 0 8px;
+}
 
-/* The last <p> is the price - render it as a headline figure */
-.product-details p:last-of-type {
-  margin: 24px 0 4px;
+.pd-type span {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.pd-price {
+  margin: 22px 0 4px;
   font-family: var(--font-mono);
   font-size: 46px;
   font-weight: 500;
   letter-spacing: -0.03em;
   color: var(--ink);
-  line-height: 1.1;
+  line-height: 1.05;
 }
 
-.product-details p:last-of-type strong {
+.pd-price strong {
   display: block;
-  margin: 0 0 8px;
+  margin: 0 0 10px;
   font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 500;
@@ -53,12 +70,19 @@
   color: var(--accent);
 }
 
-.product-image { margin-top: 26px; }
+.product-image { margin-top: 24px; }
 
 .product-image img {
   width: 56px;
   height: 56px;
   object-fit: contain;
-  opacity: 0.55;
+  opacity: 0.5;
   filter: grayscale(1);
 }
+
+.pd-cta { margin-top: 26px; }
+
+/* Empty state */
+.price-empty h1 { margin-bottom: 14px; }
+.price-empty h2 { font-size: 22px; letter-spacing: -0.02em; margin: 0 0 8px; }
+.price-empty p { color: var(--muted); margin: 0 0 20px; }

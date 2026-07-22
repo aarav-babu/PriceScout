@@ -1,28 +1,37 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-    <title>Product Details</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valuation | PriceScout</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='/css/theme.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='/css/price.css') }}">
-
 </head>
 
 <body>
     {% include '/navigbar/navbar.html' %}
-    <!-- <p>Time Left: <span id="timer">0m 10s</span></p> -->
     <div class="page">
-        <div class="content product-details">
-            <h1>Product Details</h1>
-            <p><strong>Product Category: </strong><span style="text-transform: capitalize;">{{ Type }}</span></p>
-            <p><strong>Name: </strong>{{ Name }}</p>
-            <p><strong>Price: </strong>{{ Price }}</p>
-            <div class="product-image">
-                <img src="{{ img_data }}" alt="Picture Icon">
-            </div>
+        {% if empty %}
+        <div class="content price-empty">
+            <h1>Estimated value</h1>
+            <h2>No valuations yet</h2>
+            <p>Price an item and your latest estimate will appear here.</p>
+            <a class="btn" href="/">Value an item</a>
         </div>
+        {% else %}
+        <div class="content product-details">
+            <h1>Your valuation</h1>
+            <p class="pd-name">{{ Name }}</p>
+            <p class="pd-type"><span>{{ Type }}</span></p>
+            <p class="pd-price"><strong>Estimated value</strong>{{ Price }}</p>
+            <div class="product-image">
+                <img src="{{ img_data }}" alt="{{ Type }}">
+            </div>
+            <a class="btn btn-secondary pd-cta" href="/userdata/userprofile">View all valuations</a>
+        </div>
+        {% endif %}
     </div>
-    <script src="{{ url_for('static', filename='/script/price.js') }}"></script>
 </body>
 
 </html>

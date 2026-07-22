@@ -234,28 +234,47 @@ def cars():
 
 @app.route('/postdata/price',methods = ['GET','POST'])
 def pricing():
-  if session['post_type'] == None:
-    return render_template('index.html', alert_message = True)
-  else:
-    call_webscraper()
-    cursor.execute("SELECT CONCAT(Brand, ' ', Model) AS Name, post_type, price FROM price WHERE email IN (SELECT email FROM users WHERE username = %s) ORDER BY post_id DESC LIMIT 1;",(session['user_id'],))
-    result = cursor.fetchone()
-    img_data = ''
-    print(result)
-    if session['post_type'] == 'vehicle':
-      img_data = '/static/images/vehicleicon.jpg'
-    elif session['post_type'] == 'mobiles':
-       img_data = '/static/images/mobilesicon.jpg'
-    elif session['post_type'] == 'laptops':
-       img_data = '/static/images/laptopsicon.jpg'
-    else:
-       img_data = '/static/images/defaultprice.jpg'
-    
-    if result[2] == None:
-       Price = 'Calculating Price Please check in a while'
-    else:
-       Price = result[2]   
-    return render_template('/postdata/price.html',Name = result[0], Type = result[1], Price = Price,img_data = img_data)
+  if 'user_id' not in session:
+    return redirect('/userdata/login')
+
+  # Find the user's most recent listing, regardless of what happened this session.
+  cursor.execute(
+    "SELECT post_type, price, CONCAT(Brand, ' ', Model) AS Name FROM price "
+    "WHERE email IN (SELECT email FROM users WHERE username = %s) "
+    "ORDER BY post_id DESC LIMIT 1;",
+    (session['user_id'],))
+  latest = cursor.fetchone()
+
+  if latest is None:
+    # No listings yet - show a friendly empty state instead of an alert/500.
+    return render_template('/postdata/price.html', empty=True)
+
+  post_type = latest[0]
+  session['post_type'] = post_type
+
+  # Compute the price if it hasn't been calculated yet (car flow only).
+  if latest[1] is None and post_type == 'vehicle':
+    try:
+      call_webscraper()
+    except Exception as exc:
+      print(f"[pricing] Could not compute price: {exc}")
+
+  cursor.execute(
+    "SELECT CONCAT(Brand, ' ', Model) AS Name, post_type, price FROM price "
+    "WHERE email IN (SELECT email FROM users WHERE username = %s) "
+    "ORDER BY post_id DESC LIMIT 1;",
+    (session['user_id'],))
+  result = cursor.fetchone()
+
+  img_map = {
+    'vehicle': '/static/images/vehicleicon.jpg',
+    'mobiles': '/static/images/mobilesicon.jpg',
+    'laptops': '/static/images/laptopsicon.jpg',
+  }
+  img_data = img_map.get(post_type, '/static/images/defaultprice.jpg')
+
+  Price = (u"\u20b9" + format(int(result[2]), ',')) if result[2] is not None else 'Estimate pending'
+  return render_template('/postdata/price.html', Name=result[0], Type=result[1], Price=Price, img_data=img_data)
 
 @app.route('/postdata/mobiles', methods = ['GET','POST'])
 def mobiles():
@@ -321,14 +340,55 @@ def laptops():
       return render_template('index.html')
     return render_template('/postdata/laptops.html')
 
+def _item_details(post_type, post_id):
+    """Return an ordered list of {label, value} spec rows for a listing so the
+    profile can show a full detail pop-out."""
+    specs = []
+    try:
+        if post_type == 'vehicle':
+            cursor.execute("SELECT vehicle_type, model_year, km_driven, mileage, fuel_type, transmission, owner_type, engine_capacity, power, seats, color, location FROM vehicle WHERE post_id = %s", (post_id,))
+            labels = ['Vehicle type', 'Model year', 'KM driven', 'Mileage (kmpl)', 'Fuel type', 'Transmission', 'Owner type', 'Engine (cc)', 'Power (bhp)', 'Seats', 'Color', 'Location']
+        elif post_type == 'mobiles':
+            cursor.execute("SELECT sim_slots, processor, ram, storage_size, battery_size, display, camera FROM mobiles WHERE post_id = %s", (post_id,))
+            labels = ['SIM slots', 'Processor', 'RAM (GB)', 'Storage (GB)', 'Battery (mAh)', 'Display', 'Camera']
+        elif post_type == 'laptops':
+            cursor.execute("SELECT processor, ram_size, memory_type, memory_size, display_size, refresh_rate, battery, laptop_type FROM laptops WHERE post_id = %s", (post_id,))
+            labels = ['Processor', 'RAM (GB)', 'Storage type', 'Storage size (GB)', 'Display (in)', 'Refresh rate (Hz)', 'Battery (Wh)', 'Type']
+        else:
+            return specs
+        row = cursor.fetchone()
+        if row:
+            for label, value in zip(labels, row):
+                if value is not None and str(value).strip() != '':
+                    specs.append({'label': label, 'value': value})
+    except Exception as exc:
+        print(f"[userprofile] details fetch failed: {exc}")
+    return specs
+
+
 @app.route('/userdata/userprofile', methods = ['GET','POST'])
 def userprofile():
+    if 'user_id' not in session:
+        return redirect('/userdata/login')
     data = get_user_data(session['user_id'])
-    
-    cursor.execute("SELECT * FROM price where email in (SELECT email from users where username = %s)",(session['user_id'],))
-    result = cursor.fetchall()
-   
-    return render_template('/userdata/userprofile.html',username = data[0],name = data[1], email = data[2], number = data[3], password = data[4],items = result, post_type_img = 'pfp')
+    if data is None:
+        return redirect('/userdata/login')
+
+    cursor.execute("SELECT * FROM price where email in (SELECT email from users where username = %s) ORDER BY post_id DESC",(session['user_id'],))
+    rows = cursor.fetchall()
+    items = []
+    for r in rows:
+        # price row columns: email, post_id, post_type, brand, model, description, price
+        items.append({
+            'post_type': r[2],
+            'brand': r[3],
+            'model': r[4],
+            'description': r[5],
+            'price': r[6],
+            'details': _item_details(r[2], r[1]),
+        })
+
+    return render_template('/userdata/userprofile.html', username=data[0], name=data[1], email=data[2], number=data[3], password=data[4], items=items, post_type_img='pfp')
 
 @app.route('/misc/about', methods = ['GET','POST'])
 def about():
