@@ -1,56 +1,100 @@
-// Live preview + completion progress for the valuation forms.
+// Multi-step wizard for the valuation forms. Each <fieldset.form-section> is a
+// step; the stepper is built from the section legends so it works across all
+// three forms without per-page config.
 (function () {
-  var form = document.querySelector('.form-main form');
-  if (!form) return;
+  var wizard = document.querySelector('.wizard');
+  if (!wizard) return;
 
-  var titleEl = document.querySelector('[data-preview="title"]');
-  var subEl = document.querySelector('[data-preview="sub"]');
-  var fillEl = document.querySelector('[data-progress="fill"]');
-  var countEl = document.querySelector('[data-progress="count"]');
-  var totalEl = document.querySelector('[data-progress="total"]');
+  var form = wizard.querySelector('form');
+  var steps = Array.prototype.slice.call(form.querySelectorAll('.form-section'));
+  if (!steps.length) return;
 
-  var defaultTitle = titleEl ? titleEl.textContent.trim() : '';
+  var stepperEl = wizard.querySelector('.stepper');
+  var progressFill = wizard.querySelector('.wizard-progress span');
+  var prevBtn = wizard.querySelector('[data-prev]');
+  var nextBtn = wizard.querySelector('[data-next]');
+  var submitBtn = wizard.querySelector('[data-submit]');
+  var currentEl = wizard.querySelector('[data-current]');
+  var totalEl = wizard.querySelector('[data-steps]');
 
-  var brand = form.querySelector('[name="brand"]');
-  var model = form.querySelector('[name="name-model"], [name="model-name"], [name="model"]');
-  var year = form.querySelector('[name="model-year"]');
-
-  var fields = Array.prototype.slice.call(
-    form.querySelectorAll('input[required], select[required], textarea[required]')
-  );
-  var total = fields.length;
+  var current = 0;
+  var total = steps.length;
   if (totalEl) totalEl.textContent = total;
 
-  function filledCount() {
-    var n = 0;
-    fields.forEach(function (f) {
-      if (f.value && String(f.value).trim() !== '') n++;
-    });
-    return n;
+  // Build the stepper from each section's legend text.
+  steps.forEach(function (section, i) {
+    var legend = section.querySelector('legend');
+    var name = legend ? legend.textContent.trim() : 'Step ' + (i + 1);
+    var li = document.createElement('li');
+    li.className = 'step';
+    li.innerHTML = '<span class="step-dot"></span><span class="step-label"></span>';
+    li.querySelector('.step-label').textContent = name;
+    li.addEventListener('click', function () { goTo(i); });
+    stepperEl.appendChild(li);
+  });
+
+  var stepEls = Array.prototype.slice.call(stepperEl.children);
+
+  function validateStep(i) {
+    var fields = steps[i].querySelectorAll('input, select, textarea');
+    for (var k = 0; k < fields.length; k++) {
+      if (!fields[k].checkValidity()) {
+        fields[k].reportValidity();
+        return false;
+      }
+    }
+    return true;
   }
 
-  function update() {
-    // Live title from year + brand + model
-    var parts = [];
-    if (year && year.value.trim()) parts.push(year.value.trim());
-    if (brand && brand.value.trim()) parts.push(brand.value.trim());
-    if (model && model.value.trim()) parts.push(model.value.trim());
-    var title = parts.join(' ').trim();
+  function render(focus) {
+    steps.forEach(function (s, i) { s.classList.toggle('is-active', i === current); });
+    stepEls.forEach(function (li, i) {
+      li.classList.toggle('is-active', i === current);
+      li.classList.toggle('is-done', i < current);
+    });
 
-    if (titleEl) titleEl.textContent = title || defaultTitle;
+    var last = current === total - 1;
+    if (prevBtn) prevBtn.hidden = current === 0;
+    if (nextBtn) nextBtn.hidden = last;
+    if (submitBtn) submitBtn.hidden = !last;
+    if (currentEl) currentEl.textContent = current + 1;
+    if (progressFill) progressFill.style.width = (((current + 1) / total) * 100) + '%';
 
-    var count = filledCount();
-    var pct = total ? Math.round((count / total) * 100) : 0;
-    if (fillEl) fillEl.style.width = pct + '%';
-    if (countEl) countEl.textContent = count;
-    if (subEl) {
-      subEl.textContent = count >= total
-        ? 'All set - ready for an estimate'
-        : (total - count) + ' detail' + ((total - count) === 1 ? '' : 's') + ' to go';
+    if (focus) {
+      var f = steps[current].querySelector('input, select, textarea');
+      if (f) { try { f.focus({ preventScroll: true }); } catch (e) { f.focus(); } }
     }
   }
 
-  form.addEventListener('input', update);
-  form.addEventListener('change', update);
-  update();
+  function goNext() {
+    if (!validateStep(current)) return;
+    if (current < total - 1) { current++; render(true); }
+  }
+
+  function goPrev() {
+    if (current > 0) { current--; render(true); }
+  }
+
+  function goTo(target) {
+    if (target === current) return;
+    if (target < current) { current = target; render(true); return; }
+    // Moving forward: every step in between must be valid.
+    for (var i = current; i < target; i++) {
+      if (!validateStep(i)) { current = i; render(true); return; }
+    }
+    current = target;
+    render(true);
+  }
+
+  if (nextBtn) nextBtn.addEventListener('click', goNext);
+  if (prevBtn) prevBtn.addEventListener('click', goPrev);
+
+  // Enter should advance the wizard, not submit early (textarea keeps newlines).
+  form.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+      if (current < total - 1) { e.preventDefault(); goNext(); }
+    }
+  });
+
+  render(false);
 })();
