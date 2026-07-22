@@ -77,7 +77,12 @@ CREATE TABLE `price` (
   `brand` varchar(255) DEFAULT NULL,
   `model` varchar(255) DEFAULT NULL,
   `description` text DEFAULT NULL,
-  `price` float DEFAULT NULL
+  `price` float DEFAULT NULL,
+  `pricing_status` varchar(16) NOT NULL DEFAULT 'pending',
+  `price_source` varchar(64) DEFAULT NULL,
+  `price_confidence` double DEFAULT NULL,
+  `priced_at` datetime DEFAULT NULL,
+  `model_version` char(36) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -118,6 +123,73 @@ CREATE TABLE `vehicle` (
   `power` varchar(50) DEFAULT NULL,
   `seats` int(11) DEFAULT NULL,
   `description` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+--
+-- Hosted pricing pipeline
+--
+
+CREATE TABLE `market_queries` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `category` varchar(32) NOT NULL,
+  `brand` varchar(255) NOT NULL,
+  `model` varchar(255) NOT NULL,
+  `query_text` varchar(512) NOT NULL,
+  `active` tinyint(1) NOT NULL DEFAULT 1,
+  `refresh_minutes` int NOT NULL,
+  `volatility` double NOT NULL DEFAULT 0,
+  `last_collected_at` datetime DEFAULT NULL,
+  `next_collection_at` datetime NOT NULL,
+  `created_at` datetime NOT NULL,
+  `updated_at` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `market_query_item` (`category`,`brand`,`model`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE `pipeline_runs` (
+  `id` char(36) NOT NULL,
+  `job_type` varchar(32) NOT NULL,
+  `status` varchar(16) NOT NULL,
+  `details` text DEFAULT NULL,
+  `started_at` datetime NOT NULL,
+  `finished_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `pipeline_run_started` (`started_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE `market_observations` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `query_id` bigint NOT NULL,
+  `collection_id` char(36) NOT NULL,
+  `provider` varchar(64) NOT NULL,
+  `external_id` varchar(255) NOT NULL,
+  `title` text NOT NULL,
+  `item_condition` varchar(128) DEFAULT NULL,
+  `price` decimal(14,2) NOT NULL,
+  `currency` char(3) NOT NULL,
+  `listing_url` text DEFAULT NULL,
+  `observed_at` datetime NOT NULL,
+  `expires_at` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `observations_query_time` (`query_id`,`observed_at`),
+  KEY `observations_expiry` (`expires_at`),
+  CONSTRAINT `observations_query_fk` FOREIGN KEY (`query_id`)
+    REFERENCES `market_queries` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE `model_versions` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `version` char(36) NOT NULL,
+  `target_currency` char(3) NOT NULL,
+  `row_count` int NOT NULL,
+  `median_absolute_percentage_error` double DEFAULT NULL,
+  `artifact` longblob NOT NULL,
+  `active` tinyint(1) NOT NULL DEFAULT 0,
+  `trained_at` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `model_version` (`version`),
+  KEY `active_model` (`active`,`trained_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
