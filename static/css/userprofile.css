@@ -72,6 +72,7 @@
 
 /* Product-style card */
 .post-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   background: var(--surface);
@@ -79,7 +80,14 @@
   border-radius: var(--r-lg);
   padding: 18px 20px 20px;
   box-shadow: var(--shadow-sm);
+  cursor: pointer;
   transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.post-card:focus-visible {
+  outline: none;
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px var(--focus);
 }
 
 .post-card:hover {
@@ -190,3 +198,160 @@
   .profile-hero { flex-direction: column; text-align: center; align-items: center; }
   .profile-meta { justify-content: center; }
 }
+
+/* Detail pop-out modal */
+.detail-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+/* The hidden attribute must win over display:flex, otherwise the invisible
+   overlay covers the page and swallows clicks. */
+.detail-modal[hidden] { display: none; }
+
+.detail-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 10, 10, 0.5);
+  backdrop-filter: blur(3px);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.detail-modal.open .detail-modal-backdrop { opacity: 1; }
+
+.detail-modal-card {
+  position: relative;
+  width: 100%;
+  max-width: 460px;
+  max-height: 88vh;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-lg);
+  padding: 28px 28px 26px;
+  transform: translateY(8px) scale(0.98);
+  opacity: 0;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.detail-modal.open .detail-modal-card { transform: translateY(0) scale(1); opacity: 1; }
+
+.detail-modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--muted);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.detail-modal-close:hover { background: var(--border); color: var(--ink); transform: none; }
+
+.detail-modal-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
+  padding-right: 32px;
+}
+
+.detail-modal-thumb {
+  width: 56px;
+  height: 56px;
+  flex: 0 0 auto;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-subtle);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.detail-modal-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+.detail-modal-badge {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.detail-modal-head h2 {
+  font-size: 20px;
+  letter-spacing: -0.02em;
+  margin: 4px 0 0;
+}
+
+.detail-modal-price {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 14px 16px;
+  margin-bottom: 18px;
+  background: var(--accent-soft);
+  border: 1px solid rgba(15, 107, 82, 0.18);
+  border-radius: var(--r);
+}
+
+.detail-modal-price span {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.detail-modal-price strong {
+  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--accent);
+}
+
+.detail-modal-body dl { margin: 0; }
+
+.detail-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.detail-row:last-child { border-bottom: none; }
+
+.detail-row dt { color: var(--muted); font-size: 13.5px; }
+.detail-row dd { margin: 0; color: var(--ink); font-size: 13.5px; font-weight: 500; text-align: right; text-transform: capitalize; }
+
+.detail-modal-desc {
+  margin: 16px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+
+.detail-modal-desc:empty { display: none; }
