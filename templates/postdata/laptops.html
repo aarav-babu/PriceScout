@@ -23,8 +23,14 @@
                     <li>Benchmarked on live market data</li>
                     <li>Takes less than a minute</li>
                 </ul>
-                <div class="form-progress">
-                    <span class="step-dot"></span> Laptop &nbsp;·&nbsp; Specs
+                <div class="live-card">
+                    <span class="live-card-label">Live preview</span>
+                    <div class="live-card-title" data-preview="title">Your laptop</div>
+                    <div class="live-card-sub" data-preview="sub">Start filling in the details</div>
+                    <div class="progress">
+                        <div class="progress-track"><span class="progress-fill" data-progress="fill"></span></div>
+                        <div class="progress-meta"><span data-progress="count">0</span> / <span data-progress="total">0</span> details</div>
+                    </div>
                 </div>
             </aside>
 
@@ -104,6 +110,7 @@
             </main>
         </div>
     </div>
+    <script src="{{ url_for('static', filename='/script/postdata.js') }}"></script>
 </body>
 
 </html>
