@@ -11,103 +11,92 @@
 
 <body>
     {% include '/navigbar/navbar.html' %}
-    <div class="laptopformcontainer form-page">
-        <div class="form-layout">
-            <aside class="form-aside">
+    <div class="form-page">
+        <div class="wizard">
+            <div class="wizard-head">
                 <span class="eyebrow">Instant valuation</span>
                 <h1>Value your laptop</h1>
-                <p class="form-aside-sub">Tell us the configuration and we'll estimate a fair resale price from
-                    comparable listings, no research required.</p>
-                <ul class="assurance">
-                    <li>Trusted local &amp; national pricing</li>
-                    <li>Benchmarked on live market data</li>
-                    <li>Takes less than a minute</li>
-                </ul>
-                <div class="live-card">
-                    <span class="live-card-label">Live preview</span>
-                    <div class="live-card-title" data-preview="title">Your laptop</div>
-                    <div class="live-card-sub" data-preview="sub">Start filling in the details</div>
-                    <div class="progress">
-                        <div class="progress-track"><span class="progress-fill" data-progress="fill"></span></div>
-                        <div class="progress-meta"><span data-progress="count">0</span> / <span data-progress="total">0</span> details</div>
+                <ol class="stepper" aria-hidden="true"></ol>
+                <div class="wizard-progress"><span></span></div>
+            </div>
+
+            <form method="post" onsubmit="localStorage.setItem('laptopform', 'true');">
+                <fieldset class="form-section">
+                    <legend>Laptop</legend>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="brand">Brand</label>
+                            <input type="text" name="brand" id="brand" placeholder="e.g. Apple" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="model">Model</label>
+                            <input type="text" name="model" id="model" placeholder="e.g. MacBook Air" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="laptop-type">Laptop type</label>
+                            <select name="laptop-type" id="laptop-type" required>
+                                <option value="gaming">Gaming</option>
+                                <option value="not-gaming">Not gaming</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="processor">Processor</label>
+                            <input type="text" name="processor" id="processor" placeholder="e.g. M2" required>
+                        </div>
                     </div>
+                </fieldset>
+
+                <fieldset class="form-section">
+                    <legend>Specifications</legend>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="ram-size">RAM <span class="unit">GB</span></label>
+                            <input type="text" name="ram-size" id="ram-size" placeholder="16" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="memory-type">Storage type</label>
+                            <select name="memory-type" id="memory-type" required>
+                                <option value="sdd">SSD</option>
+                                <option value="hdd">HDD</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="memory-size">Storage size <span class="unit">GB</span></label>
+                            <input type="text" name="memory-size" id="memory-size" placeholder="512" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="display-size">Display size <span class="unit">in</span></label>
+                            <input type="text" name="display-size" id="display-size" placeholder="14" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="refresh-rate">Refresh rate <span class="unit">Hz</span></label>
+                            <input type="text" name="refresh-rate" id="refresh-rate" placeholder="60" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="battery">Battery <span class="unit">Wh</span></label>
+                            <input type="text" name="battery" id="battery" placeholder="52" required>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <fieldset class="form-section">
+                    <legend>Description</legend>
+                    <div class="form-grid">
+                        <div class="form-group form-group--full">
+                            <label for="description">Anything that affects the value?</label>
+                            <textarea name="description" id="description" rows="4"
+                                placeholder="Condition, upgrades, warranty, dents or screen wear..." required></textarea>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <div class="wizard-foot">
+                    <button type="button" class="btn btn-secondary" data-prev hidden>Back</button>
+                    <span class="wizard-count">Step <b data-current>1</b> of <b data-steps>1</b></span>
+                    <button type="button" class="btn" data-next>Continue</button>
+                    <button type="submit" class="btn" data-submit hidden>Get my estimate</button>
                 </div>
-            </aside>
-
-            <main class="form-main">
-                <form method="post" onsubmit="localStorage.setItem('laptopform', 'true');">
-                    <fieldset class="form-section">
-                        <legend>Laptop</legend>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label for="brand">Brand</label>
-                                <input type="text" name="brand" id="brand" placeholder="e.g. Apple" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="model">Model</label>
-                                <input type="text" name="model" id="model" placeholder="e.g. MacBook Air" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="laptop-type">Laptop type</label>
-                                <select name="laptop-type" id="laptop-type" required>
-                                    <option value="gaming">Gaming</option>
-                                    <option value="not-gaming">Not gaming</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="processor">Processor</label>
-                                <input type="text" name="processor" id="processor" placeholder="e.g. M2" required>
-                            </div>
-                        </div>
-                    </fieldset>
-
-                    <fieldset class="form-section">
-                        <legend>Specifications</legend>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label for="ram-size">RAM <span class="unit">GB</span></label>
-                                <input type="text" name="ram-size" id="ram-size" placeholder="16" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="memory-type">Storage type</label>
-                                <select name="memory-type" id="memory-type" required>
-                                    <option value="sdd">SSD</option>
-                                    <option value="hdd">HDD</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="memory-size">Storage size <span class="unit">GB</span></label>
-                                <input type="text" name="memory-size" id="memory-size" placeholder="512" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="display-size">Display size <span class="unit">in</span></label>
-                                <input type="text" name="display-size" id="display-size" placeholder="14" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="refresh-rate">Refresh rate <span class="unit">Hz</span></label>
-                                <input type="text" name="refresh-rate" id="refresh-rate" placeholder="60" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="battery">Battery <span class="unit">Wh</span></label>
-                                <input type="text" name="battery" id="battery" placeholder="52" required>
-                            </div>
-                        </div>
-                    </fieldset>
-
-                    <fieldset class="form-section">
-                        <legend>Description</legend>
-                        <div class="form-grid">
-                            <div class="form-group form-group--full">
-                                <label for="description">Anything that affects the value?</label>
-                                <textarea name="description" id="description" rows="4"
-                                    placeholder="Condition, upgrades, warranty, dents or screen wear..." required></textarea>
-                            </div>
-                        </div>
-                    </fieldset>
-
-                    <button type="submit">Get my estimate</button>
-                </form>
-            </main>
+            </form>
         </div>
     </div>
     <script src="{{ url_for('static', filename='/script/postdata.js') }}"></script>
