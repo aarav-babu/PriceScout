@@ -37,23 +37,34 @@
 
             <div class="user_posts">
                 {% for item in items %}
-                <article class="post-card">
+                <article class="post-card" tabindex="0" role="button"
+                    aria-label="View details for {{ item.brand }} {{ item.model }}">
                     <div class="post-card-top">
                         <div class="post-thumb">
-                            <img src="{{ url_for('static', filename='images/' ~ item[2] ~ 'icon.jpg') }}" alt="{{ item[2] }}">
+                            <img src="{{ url_for('static', filename='images/' ~ item.post_type ~ 'icon.jpg') }}" alt="{{ item.post_type }}">
                         </div>
-                        <span class="post-badge">{{ item[2] }}</span>
+                        <span class="post-badge">{{ item.post_type }}</span>
                     </div>
-                    <h3 class="post-title">{{ item[3] }} {{ item[4] }}</h3>
-                    <p class="post-desc">{{ item[5] }}</p>
+                    <h3 class="post-title">{{ item.brand }} {{ item.model }}</h3>
+                    <p class="post-desc">{{ item.description }}</p>
                     <div class="post-foot">
                         <span class="post-price-label">Estimated value</span>
-                        {% if item[6] is not none %}
-                        <span class="post-price">&#8377;{{ item[6] }}</span>
+                        {% if item.price is not none %}
+                        <span class="post-price">&#8377;{{ '{:,}'.format(item.price|int) }}</span>
                         {% else %}
                         <span class="post-price pending">Pending</span>
                         {% endif %}
                     </div>
+                    <template class="post-detail-data">
+                        <dl>
+                            {% for d in item.details %}
+                            <div class="detail-row">
+                                <dt>{{ d.label }}</dt>
+                                <dd>{{ d.value }}</dd>
+                            </div>
+                            {% endfor %}
+                        </dl>
+                    </template>
                 </article>
                 {% else %}
                 <div class="posts-empty">
@@ -65,6 +76,28 @@
             </div>
         </section>
     </div>
+
+    <!-- Detail pop-out -->
+    <div class="detail-modal" id="detailModal" hidden>
+        <div class="detail-modal-backdrop" data-close></div>
+        <div class="detail-modal-card" role="dialog" aria-modal="true" aria-labelledby="dmTitle">
+            <button type="button" class="detail-modal-close" data-close aria-label="Close">&times;</button>
+            <div class="detail-modal-head">
+                <div class="detail-modal-thumb"><img id="dmThumb" alt=""></div>
+                <div>
+                    <span class="detail-modal-badge" id="dmBadge"></span>
+                    <h2 id="dmTitle"></h2>
+                </div>
+            </div>
+            <div class="detail-modal-price">
+                <span>Estimated value</span>
+                <strong id="dmPrice"></strong>
+            </div>
+            <div class="detail-modal-body" id="dmBody"></div>
+            <p class="detail-modal-desc" id="dmDesc"></p>
+        </div>
+    </div>
+
     <script src="{{ url_for('static', filename='/script/userprofile.js') }}"></script>
 </body>
 
