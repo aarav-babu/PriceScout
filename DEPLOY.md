@@ -1,89 +1,134 @@
 # Deploying PriceScout
 
-PriceScout is a Flask app backed by MySQL/MariaDB. All configuration is read
-from environment variables (see `.env.example`), so the same code runs locally,
-in Docker, or on a hosted platform.
+PriceScout has four production roles:
 
-By default `ENABLE_LIVE_SCRAPING=false`, so prices are estimated by training the
-model on the bundled market dataset (`new_cars.csv`). This means **no browser is
-required** and the app works on browserless free tiers. Live Selenium scraping
-is an opt-in path for machines that have Firefox installed.
+1. Gunicorn serves Flask and reads completed valuations.
+2. Redis carries pricing and scheduled collection jobs.
+3. Celery workers call authorized provider APIs, store observations, and price
+   listings.
+4. Celery Beat checks due queries every 15 minutes, trains a versioned model
+   every six hours, and removes expired observations daily.
 
-## Option 1: Vercel (free, serverless)
+MariaDB stores app records, query schedules, short-lived market observations,
+and serialized model versions. No browser is required.
 
-The app ships with `api/index.py` (a WSGI entrypoint) and `vercel.json` that
-routes all traffic to it via the `@vercel/python` runtime. `vercel.json` already
-sets `ENABLE_LIVE_SCRAPING=false` (serverless hosts have no browser) and
-`DATA_DIR=/tmp` (the only writable path), and `.vercelignore` trims the bundle.
+## Full pipeline with Docker Compose
 
-1. Provision a free external MySQL (Vercel has no managed MySQL - see providers
-   below) and import the schema: `mysql -h <host> -u <user> -p <db> < capstone.sql`
-2. Push this repo to GitHub and "Import Project" in Vercel.
-3. In Project Settings -> Environment Variables add: `DB_HOST`, `DB_PORT`,
-   `DB_USER`, `DB_PASSWORD`, `DB_NAME`, and a strong `SECRET_KEY`.
-4. Deploy. Health check: `https://<app>.vercel.app/health`.
-
-Constraints on Vercel/serverless: no live Selenium scraping (pricing uses the
-bundled-dataset model), the filesystem is read-only except `/tmp`, and requests
-have execution-time limits - all handled by the defaults above.
-
-## Note on Netlify
-
-Netlify Functions support JavaScript/TypeScript and Go, **not** Python, so a
-Flask backend cannot run on Netlify Functions. Use Vercel (above) for the Python
-app, or the Docker/Render options below for a persistent server. Netlify is only
-suitable here if you later split off a separate static frontend that calls the
-API hosted elsewhere.
-
-## Option 2: Docker Compose (easiest, fully free / self-host)
-
-Runs the app and a MySQL database together. The schema in `capstone.sql` is
-imported automatically on first boot.
+This is the reference deployment and can run on any Docker-capable VM:
 
 ```bash
-cp .env.example .env      # optional: adjust values
+cp .env.example .env
+# Set SECRET_KEY, DB_PASSWORD, approved eBay credentials, marketplace, currency.
 docker compose up --build
 ```
 
-App: http://localhost:5000  ·  Health check: http://localhost:5000/health
+Services are `web`, `worker`, `scheduler`, `redis`, and `db`. MariaDB imports
+`capstone.sql` on first startup. Existing databases are upgraded additively by
+the pipeline's `ensure_pipeline_schema()` function.
 
-## Option 3: Render (free web tier)
+App: `http://localhost:5000`
+Health: `http://localhost:5000/health`
 
-Render has a free web service tier but no managed MySQL, so provision a free
-MySQL first (see providers below) and set its credentials as env vars.
+`pricing_pipeline: configured` means pricing API credentials are present. It
+does not test account approval, quota, Redis, or a worker heartbeat.
 
-1. Create a free MySQL database and note host/port/user/password/db name.
-2. Import the schema: `mysql -h <host> -u <user> -p <db> < capstone.sql`
-3. Push this repo to GitHub and create a new Render Blueprint from `render.yaml`.
-4. Set `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` in the Render dashboard.
+## Provider configuration
 
-## Free MySQL providers
+Review `DATA_SOURCES.md` and obtain the required production/data-use approval
+before setting credentials.
 
-- Railway (trial credits) — https://railway.app
-- Aiven (free MySQL plan) — https://aiven.io
-- Clever Cloud (free MySQL) — https://clever-cloud.com
-
-## Local development
-
-```bash
-python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt
-cp .env.example .env
-.venv/bin/python app.py
+```dotenv
+PIPELINE_ENABLED=true
+EBAY_CLIENT_ID=...
+EBAY_CLIENT_SECRET=...
+EBAY_MARKETPLACE_ID=EBAY_US
+TARGET_CURRENCY=USD
+CELERY_BROKER_URL=redis://redis:6379/0
+CELERY_RESULT_BACKEND=redis://redis:6379/0
 ```
 
-## Environment variables
+The marketplace and target currency must match. Listings with a different
+currency are discarded. Asking prices are not completed-sale prices.
 
-| Variable | Default | Description |
-| --- | --- | --- |
-| `DB_HOST` | `localhost` | Database host |
-| `DB_PORT` | `3306` | Database port |
-| `DB_USER` | `root` | Database user |
-| `DB_PASSWORD` | (empty) | Database password |
-| `DB_NAME` | `capstone` | Database name |
-| `SECRET_KEY` | `dev-insecure-change-me` | Flask session secret (set a strong value in prod) |
-| `ENABLE_LIVE_SCRAPING` | `false` | Use live Selenium scraping instead of the cached-dataset model |
-| `SCRAPER_SOURCE` | `cars24` | Live scraper source: `cars24` or `facebook_marketplace` |
-| `SELENIUM_HEADLESS` | `true` | Run Firefox headless when live scraping is enabled |
-| `DATA_DIR` | app dir | Writable dir for CSV logs; set to `/tmp` on serverless hosts |
-| `HOST` / `PORT` | `127.0.0.1` / `5000` | Dev server bind address |
+## Adaptive refresh behavior
+
+Each submitted brand/model becomes one deduplicated market query. Celery Beat
+checks for due queries every 15 minutes. After collection, the scheduler
+compares recent batch medians:
+
+- high median-price movement shortens the interval;
+- stable prices remain near the category baseline;
+- category-specific minimum and maximum bounds prevent aggressive polling or
+  stale data.
+
+Defaults:
+
+| Category | Minimum | Baseline | Maximum |
+| --- | ---: | ---: | ---: |
+| Vehicles | 4 hours | 12 hours | 24 hours |
+| Mobiles | 1 hour | 6 hours | 24 hours |
+| Laptops | 3 hours | 12 hours | 48 hours |
+
+Tune the `*_REFRESH_MINUTES` variables only within the provider's quota and
+contract. Collection is demand-driven: models users have not submitted are not
+polled.
+
+## Model lifecycle
+
+The worker retains observations for `OBSERVATION_RETENTION_DAYS` (seven by
+default). Once at least `MODEL_MINIMUM_ROWS` valid same-currency observations
+exist, training creates a new immutable model version in MariaDB and atomically
+marks it active. Predictions record source, confidence, timestamp, and model
+version.
+
+Before enough data exists, an exact brand/model median is used. If neither a
+model nor comparables exist, the estimate remains pending. The old bundled
+vehicle dataset is used only when `PIPELINE_ENABLED=false`; phones and laptops
+correctly remain pending in that mode.
+
+## Split hosting
+
+The full pipeline needs persistent worker processes and Redis. Deploy the same
+image in three roles:
+
+```bash
+gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+celery -A celery_worker.celery worker --loglevel=INFO --concurrency=2
+celery -A celery_worker.celery beat --loglevel=INFO
+```
+
+All roles must share MariaDB, Redis, provider settings, and target currency.
+Run exactly one Beat instance.
+
+The included Render blueprint and Vercel configuration deploy only the
+browserless web/fallback mode (`PIPELINE_ENABLED=false`). Vercel functions
+cannot host a persistent Celery worker. To use either for the web tier, run the
+worker, Beat, and Redis elsewhere and explicitly enable the pipeline in the web
+environment.
+
+## Database and operational checks
+
+For a separately provisioned database:
+
+```bash
+mysql -h <host> -u <user> -p <db> < capstone.sql
+```
+
+Basic checks:
+
+```bash
+curl -fsS http://localhost:5000/health
+docker compose exec worker celery -A celery_worker.celery inspect ping
+docker compose logs worker scheduler
+```
+
+Monitor failed `pipeline_runs`, provider HTTP errors, queue depth, observation
+age, active model age, model holdout error, and pending valuation count. Never
+log API secrets or OAuth tokens.
+
+## Serverless fallback
+
+Vercel uses `api/index.py`, `PIPELINE_ENABLED=false`, and `DATA_DIR=/tmp`.
+Supply external MySQL credentials and a strong `SECRET_KEY`. The Flask app can
+serve the bundled vehicle estimate, but this mode does not collect live data or
+price electronics.

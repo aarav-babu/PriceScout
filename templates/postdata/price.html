@@ -25,6 +25,9 @@
             <p class="pd-name">{{ Name }}</p>
             <p class="pd-type"><span>{{ Type }}</span></p>
             <p class="pd-price"><strong>Estimated value</strong>{{ Price }}</p>
+            {% if status_message %}
+            <p>{{ status_message }}</p>
+            {% endif %}
             <div class="product-image">
                 <img src="{{ img_data }}" alt="{{ Type }}">
             </div>
