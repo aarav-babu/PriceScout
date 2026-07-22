@@ -1,124 +1,124 @@
-body {
-    margin: 0;
-    padding: 0;
-    font-family: 'Arial', sans-serif;
-    background-color: #f0f0f0;
-    text-align: center;
-}
-
 .landing {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    margin-top: 20px;
-    margin-left: 50px;
-    margin-right: 50px;
-    border-radius: 25px;
-    height: 50vh;
-    color: #eed7d7;
-    background-color: #143851; /* Matching the theme color */
+  position: relative;
+  text-align: center;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 96px 24px 40px;
 }
 
-.website-name {
-    font-size: 24px;
-    font-weight: bold;
-    margin-top: 10px;
-    color: #fff; /* Adjusting the text color */
-}
-h1{
-    font-size: 48px;
-    font-family: Copperplate,fantasy, sans-serif;
-}
-
-h3{
-    font-size: 28px;
-    font-family: Copperplate, fantasy, serif;
-}
-#landingpara{
-    font-size: 20px;
-    font-family: 'Courier New', Courier, monospace;
-}
-.container {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-around;
-    align-items: center;
-    margin: 20px auto;
-    max-width: 800px;
-}
-
-.box {
-    flex: 1;
-    max-width: 200px;
-    margin: 10px;
-    margin-top: -80px;
-    padding: 20px;
-    border: 1px solid #12476b; /* Matching the theme color */
-    border-radius: 7px;
-    text-align: center;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    background-color: #fff; /* Matching the theme background color */
-}
-
-.box:hover {
-    background-color: #ecf0f1; /* Lighter background on hover */
-}
-
-/* Remove hyperlink styles */
-.box a {
-    
-    text-decoration: none;
-    color: #000;
-}
-
-/* Add this CSS for the popup */
-.popup {
-    position: absolute;
-    background-color: #fff;
-    border: 1px solid #3498db;
-    border-radius: 7px;
-    padding: 10px;
-    z-index: 1; /* Set the z-index to make sure it appears on top */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+.landing::before {
+  content: "AI-powered resale valuations";
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 6px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  margin-bottom: 26px;
 }
 
 .landing h1 {
-    font-size: 36px; /* Adjust the font size as needed */
-    font-weight: bold; /* Make the title bold */
-    color: #bfb6b6; /* Change the title color to match the theme */
-    margin-bottom: 20px; /* Add some space below the title */
+  font-size: clamp(44px, 7vw, 76px);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  margin: 0 0 20px;
 }
 
-.landing p {
-    font-size: 18px; /* Adjust the font size as needed */
-    color: #e5c5c5; /* Change the text color to a darker shade */
+.landing h3 {
+  font-size: clamp(18px, 2.4vw, 22px);
+  font-weight: 500;
+  color: var(--ink-2);
+  max-width: 640px;
+  margin: 0 auto 16px;
+  letter-spacing: -0.02em;
 }
+
+.landing #landingpara,
+.landing p {
+  font-size: 16px;
+  color: var(--muted);
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+.container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  max-width: var(--maxw);
+  margin: 48px auto 90px;
+  padding: 0 24px;
+}
+
+.box {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 24px 22px 26px;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.box::after {
+  content: "\2197"; /* up-right arrow */
+  position: absolute;
+  top: 18px;
+  right: 20px;
+  font-size: 16px;
+  color: var(--faint);
+  transition: transform 0.18s ease, color 0.18s ease;
+}
+
+.box:hover {
+  transform: translateY(-3px);
+  border-color: var(--ink);
+  box-shadow: var(--shadow);
+}
+
+.box:hover::after { color: var(--ink); transform: translate(2px, -2px); }
+
+.box h2 {
+  font-size: 19px;
+  font-weight: 600;
+  margin: 0 0 4px;
+  letter-spacing: -0.02em;
+}
+
+.box p { margin: 0; color: var(--muted); font-size: 14px; }
+
+/* JS-driven info popups */
 .overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5); /* Adjust the last value for transparency */
-    z-index: 1; /* Set the z-index to be behind the popup */
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 10, 10, 0.45);
+  backdrop-filter: blur(3px);
+  z-index: 60;
 }
 
 .popup {
-    position: fixed;
-    background-color: #fff;
-    padding: 20px;
-    border: 1px solid #ccc;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    max-width: 400px;
-    text-align: left;
-    overflow-wrap: break-word;
-    opacity: 0; /* Initially set opacity to 0 for a fade-in effect */
-    transition: opacity 0.3s ease; /* Add a longer transition for the opacity property */
+  position: fixed;
+  background: var(--surface);
+  padding: 26px 28px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+  max-width: 460px;
+  text-align: left;
+  color: var(--ink-2);
+  line-height: 1.65;
+  font-size: 15px;
+  overflow-wrap: break-word;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  z-index: 70;
 }
 
-.popup.active {
-    opacity: 1; /* Set opacity to 1 to reveal the popup */
-    transition: opacity 0.9s ease; /* Keep the transition duration shorter for appearing */
-}
+.popup.active { opacity: 1; }

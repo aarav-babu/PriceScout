@@ -1,68 +1,95 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-    <title>Mobile Phones Page</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Value your phone | PriceScout</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='/css/theme.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='/css/postdata.css') }}">
 </head>
 
 <body>
-    <!-- Form for Mobile Phone Details -->
     {% include '/navigbar/navbar.html' %}
-    <div class="mobileformcontainer">
-        <video autoplay muted loop id="bg-video">
-            <source src="{{ url_for('static', filename='/videos/mobiles_bg.mp4') }}" type="video/mp4">
-            Your browser does not support the video tag.
-        </video>
-        <div class="page">
-            <div class="container">
-                <h2>Mobile Phone Details</h2>
-                <form method="post" onsubmit="localStorage.setItem('mobileform', 'true');">
-                    <div class="form-group">
-                        <label for="brand">Brand:</label>
-                        <input type="text" name="brand" id="brand" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="model-name">Model Name:</label>
-                        <input type="text" name="model-name" id="model-name" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="sim-slots">No of SIM Slots:</label>
-                        <input type="number" name="sim-slots" id="sim-slots" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="processor">Processor:</label>
-                        <input type="text" name="processor" id="processor" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="ram">RAM:</label>
-                        <input type="text" name="ram" id="ram" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="storage-size">Storage Size:</label>
-                        <input type="text" name="storage-size" id="storage-size" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="battery-size">Battery Size:</label>
-                        <input type="text" name="battery-size" id="battery-size" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="display">Display:</label>
-                        <input type="text" name="display" id="display" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="camera">Camera:</label>
-                        <input type="text" name="camera" id="camera" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="description">Description:</label>
-                        <textarea name="description" id="description" rows="5" required></textarea>
-                    </div>
-                    <button type="submit">Submit</button>
-                </form>
+    <div class="form-page">
+        <div class="wizard">
+            <div class="wizard-head">
+                <span class="eyebrow">Instant valuation</span>
+                <h1>Value your phone</h1>
+                <ol class="stepper" aria-hidden="true"></ol>
+                <div class="wizard-progress"><span></span></div>
             </div>
+
+            <form method="post" onsubmit="localStorage.setItem('mobileform', 'true');">
+                <fieldset class="form-section">
+                    <legend>Device</legend>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="brand">Brand</label>
+                            <input type="text" name="brand" id="brand" placeholder="e.g. Apple" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="model-name">Model name</label>
+                            <input type="text" name="model-name" id="model-name" placeholder="e.g. iPhone 14" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="sim-slots">SIM slots</label>
+                            <input type="number" name="sim-slots" id="sim-slots" placeholder="2" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="processor">Processor</label>
+                            <input type="text" name="processor" id="processor" placeholder="e.g. A15 Bionic" required>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <fieldset class="form-section">
+                    <legend>Specifications</legend>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="ram">RAM <span class="unit">GB</span></label>
+                            <input type="text" name="ram" id="ram" placeholder="6" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="storage-size">Storage <span class="unit">GB</span></label>
+                            <input type="text" name="storage-size" id="storage-size" placeholder="128" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="battery-size">Battery <span class="unit">mAh</span></label>
+                            <input type="text" name="battery-size" id="battery-size" placeholder="3200" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="display">Display</label>
+                            <input type="text" name="display" id="display" placeholder="6.1 inches" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="camera">Camera</label>
+                            <input type="text" name="camera" id="camera" placeholder="48 MP" required>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <fieldset class="form-section">
+                    <legend>Description</legend>
+                    <div class="form-grid">
+                        <div class="form-group form-group--full">
+                            <label for="description">Anything that affects the value?</label>
+                            <textarea name="description" id="description" rows="4"
+                                placeholder="Condition, box &amp; accessories, battery health, scratches..." required></textarea>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <div class="wizard-foot">
+                    <button type="button" class="btn btn-secondary" data-prev hidden>Back</button>
+                    <span class="wizard-count">Step <b data-current>1</b> of <b data-steps>1</b></span>
+                    <button type="button" class="btn" data-next>Continue</button>
+                    <button type="submit" class="btn" data-submit hidden>Get my estimate</button>
+                </div>
+            </form>
         </div>
     </div>
+    <script src="{{ url_for('static', filename='/script/postdata.js') }}"></script>
 </body>
 
 </html>
