@@ -1,0 +1,11 @@
+{% extends 'public/base.html' %}
+{% block title %}Your products · PriceScout{% endblock %}
+{% block content %}
+<section class="intro"><p class="eyebrow">A LITTLE CONTEXT GOES A LONG WAY</p><h1>Everything has<br>a story. Start here.</h1><p class="lede">Research a car’s asking price, or save the details of a phone or laptop.<br>Choose a category to get started.</p></section>
+<section class="category-grid" aria-label="Product categories">
+  <a class="category-card" href="/"><span class="step">01 / CARS</span><h2>Your next<br>set of wheels.</h2><p>Compare live used-car asking prices across Indian cities.</p><span class="status-pill">Live prices</span><strong>Find car prices ↗</strong></a>
+  <a class="category-card" href="/postdata/mobiles"><span class="step">02 / PHONES</span><h2>A phone with<br>more to give.</h2><p>Save its model, storage, condition, and the details that matter.</p><span class="status-pill muted-pill">Save product details</span><strong>Add a phone ↗</strong></a>
+  <a class="category-card" href="/postdata/laptops"><span class="step">03 / LAPTOPS</span><h2>Keep your<br>workhorse in view.</h2><p>Keep your laptop’s specifications together in your collection.</p><span class="status-pill muted-pill">Save product details</span><strong>Add a laptop ↗</strong></a>
+</section>
+<p class="quiet-note category-note">Phone and laptop pricing is not available yet. Saving an item does not produce a price estimate.</p>
+{% endblock %}

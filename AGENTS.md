@@ -1,5 +1,20 @@
 # PriceScout
 
+## Active public deployment
+
+- The live Render site runs `public_app:app`, uses `requirements-public.txt`, and
+  follows `main` with `autoDeployTrigger: checksPass` in `render.yaml`.
+- Public templates are under `templates/public/`; preserve the green/cream design.
+- `account_pages.py` and `account_store.py` provide accounts and saved electronics.
+  Production uses Neon through `DATABASE_URL`; local development uses SQLite in
+  ignored `instance/`. Never configure ephemeral SQLite for hosted accounts.
+- `live_prices.py` contains the existing public car search. Phones/laptops save
+  product details and explicitly show unavailable pricing; do not invent prices.
+- Run `python -m unittest discover -s tests -v` with both requirement files
+  installed. GitHub CI includes the research-pipeline tests as well as public tests.
+- The existing MySQL/Celery code is a separate research application. Preserve it;
+  the instructions below describe that application, not the public Render process.
+
 Flask web app that estimates resale prices for mobiles, laptops, and vehicles using authorized marketplace APIs plus scikit-learn models. Data is stored in a MySQL/MariaDB database named `capstone`.
 
 ## Cursor Cloud specific instructions
@@ -23,9 +38,9 @@ Flask web app that estimates resale prices for mobiles, laptops, and vehicles us
 
 - All config is env-driven (`.env.example`). `gunicorn app:app` is the production server (`Procfile`, `Dockerfile`).
 - Vercel: `api/index.py` is the WSGI entrypoint and `vercel.json` routes all traffic to it; `.vercelignore` trims the bundle. The included config uses fallback mode. A full pipeline requires separately hosted persistent workers and Redis.
-- `docker compose up --build` runs web + worker + scheduler + Redis + MariaDB and auto-imports `capstone.sql`. `render.yaml` targets the fallback web tier. See `DEPLOY.md`.
+- `docker compose up --build` runs the research web + worker + scheduler + Redis + MariaDB and auto-imports `capstone.sql`. See `DEPLOY.md` for that stack; the public Render deployment is documented in `DEPLOYMENT.md`.
 
 ### Notes
 
-- There is no automated test suite or linter configured. Use `.venv/bin/python -m py_compile *.py` as a basic syntax check.
+- Automated tests live in `tests/`; run the full suite as described above.
 - The hosted market model covers all categories after enough authorized observations exist. The bundled fallback covers vehicles only.
