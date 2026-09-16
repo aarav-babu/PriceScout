@@ -6,6 +6,25 @@ The Render Free service runs `public_app:app` from **main**. Neon Free PostgreSQ
 stores accounts and saved phones/laptops. The MySQL/Celery research application
 remains separate and is not loaded by the public web process.
 
+## Production resources
+
+- [Render service](https://dashboard.render.com/web/REDACTED_RENDER_SERVICE):
+  `pricescout`, Python, Free, Oregon.
+- [Render Blueprint](https://dashboard.render.com/blueprint/REDACTED_RENDER_BLUEPRINT):
+  `PriceScout public beta`, following `main` and `render.yaml`.
+- [Neon project](https://console.neon.tech/app/projects/REDACTED_NEON_PROJECT):
+  `PriceScout`, Free, AWS Oregon, `production` branch, `neondb` database.
+
+The first account release was verified on the hosted site: registration, secure
+session cookies, saving both product categories, signing out and back in with a
+fresh session, retrieving the saved collection, and a live car search all passed.
+These checks confirm the Render-to-Neon connection; local SQLite tests alone do
+not validate production database connectivity.
+
+Accounts currently support registration, sign-in, and sign-out. Email verification
+and password recovery are not implemented yet. Existing research-app accounts
+must register separately on the public site.
+
 ## Everyday workflow
 
 1. Create a feature branch from the latest `main`.
