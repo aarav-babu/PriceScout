@@ -3,7 +3,8 @@
 ## Active public deployment
 
 - The live Render site runs `public_app:app`, uses `requirements-public.txt`, and
-  follows `main` with `autoDeployTrigger: checksPass` in `render.yaml`.
+  follows `main`. GitHub Actions deploys after tests and secret scanning; native
+  Render auto-deploy is off to avoid duplicate or unchecked releases.
 - Public templates are under `templates/public/`; preserve the green/cream design.
 - `account_pages.py` and `account_store.py` provide accounts and saved electronics.
   Production uses Neon through `DATABASE_URL`; local development uses SQLite in
