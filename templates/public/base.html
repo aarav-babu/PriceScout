@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Compare used-car asking prices and keep your phones and laptops in one private collection.">
+  <title>{% block title %}PriceScout{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/public.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/account-pages.css') }}">
+  {% block scripts %}{% endblock %}
+</head>
+<body>
+  <header class="topbar">
+    <a class="wordmark" href="/">Price<span>Scout</span><span class="logo-dot" aria-hidden="true"></span></a>
+    <nav class="main-nav" aria-label="Main navigation">
+      <a href="/">Car prices</a><a href="/products">Products</a><a href="/misc/about">About us</a>
+      {% if signed_in %}<a href="/userdata/userprofile">My collection</a><form action="/logout" method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="nav-button" type="submit">Sign out</button></form>
+      {% else %}<a class="nav-signin" href="/userdata/login">Sign in ↗</a>{% endif %}
+    </nav>
+  </header>
+  <main>
+    {% with messages = get_flashed_messages(with_categories=true) %}{% for category, message in messages %}<div class="flash-message" role="status">{{ message }}</div>{% endfor %}{% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+  <footer><a class="wordmark" href="/">Price<span>Scout</span></a><p>Independent price research. Not affiliated with Cars24.<br>Prices and availability may change after a search.</p><div class="footer-links"><a href="/misc/about">About us</a><a href="/misc/contact">Contact</a><span class="beta">PUBLIC BETA</span></div></footer>
+</body>
+</html>

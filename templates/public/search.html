@@ -1,0 +1,46 @@
+{% extends 'public/base.html' %}
+{% block title %}{% if result %}{{ values.model|title }} prices · {% endif %}PriceScout{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='script/public.js') }}" defer></script>{% endblock %}
+{% block content %}
+    <section class="intro">
+      <p class="eyebrow"><span class="live-dot" aria-hidden="true"></span> REAL LISTINGS. CLEARER DECISIONS.</p>
+      <h1>A little research.<br>A better car deal.</h1>
+      <p class="lede">Find out what used cars are listed for.<br>Enter a few details to compare current asking prices in your city.</p>
+    </section>
+    <section class="search-panel" aria-labelledby="search-title">
+      <div class="panel-heading"><h2 id="search-title">What car are you looking for?</h2><span>No account needed</span></div>
+      <form action="/" method="get" id="search-form">
+        <div class="primary-fields">
+          <label>Brand<select name="brand" required>{% for key, name in brands.items() %}<option value="{{ key }}" {% if values.brand == key %}selected{% endif %}>{{ name }}</option>{% endfor %}</select></label>
+          <label>Model<input name="model" value="{{ values.model }}" placeholder="e.g. Swift" maxlength="40" required pattern="[A-Za-z0-9][A-Za-z0-9 .\-]{0,39}" autocomplete="off"><span class="hint">Model name only, without the brand or variant.</span></label>
+          <label>City<select name="city" required>{% for key, name in cities.items() %}<option value="{{ key }}" {% if values.city == key %}selected{% endif %}>{{ name }}</option>{% endfor %}</select></label>
+        </div>
+        <div class="secondary-fields">
+          <label>Model year <span class="optional">optional</span><select name="year"><option value="">Any year</option>{% for year in years %}<option value="{{ year }}" {% if values.year == year|string %}selected{% endif %}>{{ year }}</option>{% endfor %}</select></label>
+          <label>Fuel <span class="optional">optional</span><select name="fuel"><option value="">Any fuel</option>{% for fuel in ['Petrol', 'Diesel', 'CNG', 'Electric', 'Hybrid'] %}<option {% if values.fuel == fuel %}selected{% endif %}>{{ fuel }}</option>{% endfor %}</select></label>
+          <label>Transmission <span class="optional">optional</span><select name="transmission"><option value="">Any transmission</option>{% for transmission in ['Manual', 'Automatic'] %}<option {% if values.transmission == transmission %}selected{% endif %}>{{ transmission }}</option>{% endfor %}</select></label>
+          <button type="submit" id="search-button">Find car prices <span aria-hidden="true">↗</span></button>
+        </div>
+        <p id="search-status" role="status" aria-live="polite">Prices are fetched on search and reused for up to 5 minutes.</p>
+      </form>
+    </section>
+    {% if error %}
+    <section class="notice" role="alert"><h2>We couldn’t finish this search</h2><p>{{ error }}</p>{% if source_url %}<a href="{{ source_url }}" target="_blank" rel="noopener noreferrer">Check this search on Cars24 ↗</a>{% endif %}</section>
+    {% elif result %}
+    <section class="results" aria-labelledby="results-title">
+      <div class="results-heading"><div><p class="eyebrow">YOUR MARKET SNAPSHOT</p><h2 id="results-title">{{ brands[values.brand] }} {{ values.model|title }} in {{ cities[values.city] }}</h2></div><span class="source-label">Source: Cars24</span></div>
+      <p class="timestamp">Checked {{ result.checked_at_label }}{% if result.cached %} · Cached result{% endif %}</p>
+      {% if summary %}
+      <div class="summary"><div><span>Lowest asking price</span><strong>{{ summary.lowest|rupees }}</strong></div><div><span>Median asking price</span><strong>{{ summary.median|rupees }}</strong></div><div><span>Highest asking price</span><strong>{{ summary.highest|rupees }}</strong></div></div>
+      <div class="list-heading"><h3>{{ result.listings|length }} matching listings</h3><span>Price: low to high</span></div>
+      <div class="listings">{% for item in result.listings %}
+        <article class="listing"><div class="year-badge">{{ item.year }}<span>MODEL YEAR</span></div><div class="listing-details"><h3>{{ item.title }}</h3><p>{{ '{:,}'.format(item.kilometers) }} km <span>·</span> {{ item.fuel }} <span>·</span> {{ item.transmission }}</p>{% if item.location %}<p class="location">{{ item.location }}</p>{% endif %}</div><div class="listing-price"><strong>{{ item.price|rupees }}</strong><a href="{{ item.url }}" target="_blank" rel="noopener noreferrer">View on Cars24 ↗</a></div></article>
+      {% endfor %}</div>
+      {% else %}<div class="notice"><h3>No matches in this sample</h3><p>Try removing the year, fuel, or transmission filters. This search checks the first page of listings, so other matching cars may be available on Cars24.</p></div>{% endif %}
+      <p class="results-note">Based on {{ result.sample_count }} priced listings read from the source’s first page. Filters apply to this sample; this is not the full market. The source may include cars outside your chosen city—check each location. Prices are seller asking prices, not sale prices or a valuation of your car. Confirm availability, condition, and final fees with the seller.</p>
+      <a class="source-link" href="{{ source_url }}" target="_blank" rel="noopener noreferrer">Explore the full search on Cars24 ↗</a>
+    </section>
+    {% else %}
+    <section class="how-it-works" aria-label="How it works"><div><span class="step">01</span><h3>Start with the basics</h3><p>Pick a brand, model, and city. Add filters if you have something specific in mind.</p></div><div><span class="step">02</span><h3>Get a feel for the market</h3><p>Compare asking prices and mileage from real listings, with a clear check time.</p></div><div><span class="step">03</span><h3>Go straight to the source</h3><p>Open a listing to check the car’s details and contact the seller on Cars24.</p></div></section>
+    {% endif %}
+{% endblock %}
