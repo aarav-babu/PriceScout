@@ -1,0 +1,7 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Empty eBay secret example followed by a public marketplace identifier"
+regexTarget = "match"
+regexes = ['''EBAY_CLIENT_SECRET=\nEBAY_MARKETPLACE_ID=EBAY_US''']

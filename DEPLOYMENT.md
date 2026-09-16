@@ -1,114 +1,73 @@
-# PriceScout deployment and CI/CD
+# PriceScout deployment
 
-**Public site:** https://pricescout-urwq.onrender.com
+[Public site](https://pricescout-urwq.onrender.com/) · [Architecture](README.md#system-architecture)
 
-The Render Free service runs `public_app:app` from **main**. Neon Free PostgreSQL
-stores accounts and saved phones/laptops. The MySQL/Celery research application
-remains separate and is not loaded by the public web process.
+The hosted app runs `public_app:app` on Render Free and stores accounts/products in Neon Free PostgreSQL. The research MySQL/Celery application is a separate deployment. Private dashboard identifiers and credential values are intentionally absent from this document.
 
-## Production resources
+## Where secrets belong
 
-- [Render service](https://dashboard.render.com/web/REDACTED_RENDER_SERVICE):
-  `pricescout`, Python, Free, Oregon.
-- [Render Blueprint](https://dashboard.render.com/blueprint/REDACTED_RENDER_BLUEPRINT):
-  `PriceScout public beta`, following `main` and `render.yaml`.
-- [Neon project](https://console.neon.tech/app/projects/REDACTED_NEON_PROJECT):
-  `PriceScout`, Free, AWS Oregon, `production` branch, `neondb` database.
+| Secret | Storage | Used by |
+| --- | --- | --- |
+| `RENDER_DEPLOY_HOOK` | GitHub repository → Settings → Secrets and variables → Actions | The deployment job only |
+| `DATABASE_URL` | Render service → Environment | Public app → Neon pooled PostgreSQL over TLS |
+| `SECRET_KEY` | Render service → Environment | Flask session signing and CSRF protection |
 
-The first account release was verified on the hosted site: registration, secure
-session cookies, saving both product categories, signing out and back in with a
-fresh session, retrieving the saved collection, and a live car search all passed.
-These checks confirm the Render-to-Neon connection; local SQLite tests alone do
-not validate production database connectivity.
+GitHub needs permission to trigger a deployment, not access to user data or the session-signing key. Do not duplicate database credentials in GitHub. Never put secret values in Markdown, committed `.env` files, workflow YAML, command arguments, or logs. The local `.env.example` contains names and example settings only.
 
-Accounts currently support registration, sign-in, and sign-out. Email verification
-and password recovery are not implemented yet. Existing research-app accounts
-must register separately on the public site.
+A Render deploy hook is itself a secret: anyone holding it can trigger a release. Copy it from the service’s Settings into the GitHub Actions secret. The workflow fails clearly if it is missing. Rotate a compromised hook in Render and update the GitHub secret. Rotate a compromised database password in Neon and replace `DATABASE_URL` in Render; replacing `SECRET_KEY` signs existing users out.
 
-## Everyday workflow
+## Merge-to-deploy workflow
 
-1. Create a feature branch from the latest `main`.
-2. Make changes and open a pull request against `main`.
-3. Wait for **Tests and production startup** to pass. This runs the entire test
-   suite, including the existing market-model tests, and starts Gunicorn to check
-   the home page and `/healthz`.
-4. Merge the pull request. The workflow runs again on the merged commit.
-5. Render's **After CI Checks Pass** setting automatically builds and deploys that
-   `main` commit. Failed CI does not deploy.
-6. Check the Render deploy status and `/healthz`; its `revision` field identifies
-   the running commit. A successful GitHub test run is not itself deployment success.
+1. Open a pull request against `main`.
+2. GitHub Actions runs the full unit suite, a production Gunicorn startup check, and Gitleaks secret scanning. PRs never deploy.
+3. Merge after checks pass. The merged commit receives the same checks.
+4. The **Deploy and verify production** job calls the secret Render deploy hook with that exact commit SHA. Queued runs skip a commit if `main` has already advanced.
+5. Render installs the public requirements, repeats public tests, and starts the app.
+6. GitHub polls `/healthz` until its `revision` matches the tested commit. Hook acceptance alone does not count as deployment success. A failure or timeout is visible in Actions.
 
-The workflow is `.github/workflows/ci.yml`. It uses read-only repository
-permissions, pinned action commits, no production secrets, and cancels superseded
-checks for the same branch/PR. PR checks never deploy the PR to production.
+Workflow: `.github/workflows/ci.yml`. Deploy script: `scripts/deploy_render.py`. Pinned actions use read-only repository permissions. Deployments are serialized; the script does not print the hook URL or its response. Runtime credentials are never needed by CI.
 
-`render.yaml` keeps `branch: main` and `autoDeployTrigger: checksPass`. The Render
-service and its Blueprint must both follow `main`, with a connected GitHub
-provider. The Blueprint must not remain linked to the old launch branch or a
-later sync could restore the old configuration.
+Keep the Render service’s source branch at `main`, **Auto-Deploy off**, and the Blueprint’s **Auto Sync off**. GitHub Actions owns application releases. This avoids a second deployment path bypassing checks or racing the workflow. Infrastructure changes to `render.yaml` require a deliberate Blueprint sync after checks pass; routine application changes require only a merge. The deploy hook works without installing Render’s GitHub app.
 
-## Runtime configuration
+## Runtime settings
 
 | Setting | Value |
 | --- | --- |
 | Runtime / plan | Python 3 / Free |
-| Build command | `pip install -r requirements-public.txt && python -m unittest discover -s tests -p 'test_public*.py' -v` |
-| Start command | `gunicorn public_app:app --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 60 --access-logfile - --error-logfile -` |
+| Python | `3.11.16` |
+| Build | `pip install -r requirements-public.txt && python -m unittest discover -s tests -p 'test_public*.py' -v` |
+| Start | `gunicorn public_app:app --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 60 --access-logfile - --error-logfile -` |
 | Health check | `/healthz` |
-| `PYTHON_VERSION` | `3.11.16` |
-| `TRUST_PROXY` | `1` behind Render's proxy |
-| `SECRET_KEY` | Persistent random secret stored only in Render |
-| `DATABASE_URL` | Neon pooled PostgreSQL URL with TLS, stored only in Render |
+| `TRUST_PROXY` | `1` behind Render’s proxy |
+| Database | Neon pooled PostgreSQL connection string with TLS |
 
-No deploy hook or Render API token is needed in GitHub. Render watches successful
-GitHub checks. The build repeats public tests as a second gate, including for a
-manual deploy. A failed build leaves the existing deployment running.
+Use one worker/instance until caching, throttling, and fetch coordination move to a shared store. Render’s disk is temporary and must not hold production accounts. The app fails account operations safely if the hosted database configuration is absent; public search remains available.
 
-Use one worker/instance for the beta. Search caching and throttling are
-process-local; multiple workers require a shared cache/rate limiter first.
+## Storage and account limits
 
-## Accounts and products
+The account store initially creates the namespaced `public_users` and `public_products` tables. It does not migrate legacy accounts or alter existing columns. Future schema changes need explicit migrations. Passwords are hashed, state-changing forms require CSRF tokens, and production session cookies use Secure, HttpOnly, and SameSite. Product queries are scoped to the signed-in account.
 
-On first use, the account store creates `public_users` and `public_products` if
-missing. It does not modify the legacy MySQL schema. Users register with an email
-and password; passwords are hashed with Werkzeug, forms require CSRF tokens,
-and HTTPS sessions use secure/HttpOnly/SameSite cookies. Product reads are scoped
-to the signed-in account. Legacy MySQL accounts are not migrated automatically.
-
-Phone and laptop forms save specifications and notes; their result pages clearly
-say **Pricing unavailable**. No placeholder valuation is generated. The existing
-authorized market-data pipeline can be integrated later with its required
-provider credentials, market settings, and worker infrastructure.
-
-Do not rotate `SECRET_KEY` during ordinary deploys: rotation signs everyone out.
-Do not commit database credentials or copy them into GitHub Actions. Render's
-ephemeral disk is used for neither accounts nor saved products. If database
-configuration is missing, account operations return a friendly 503 and public
-car search remains available. Schema changes beyond these initial tables require
-an explicit migration; `create_all()` does not alter existing columns.
-
-## Price behavior and free-tier limits
-
-Car searches read a first-page sample of current Cars24 asking prices. Current
-prices are distinguished from EMI and old prices. Results are cached for five
-minutes with the original timestamp; failures never return sample/fake prices.
-The source can include nearby/out-of-city listings. Check each seller location.
-
-Render Free sleeps after 15 minutes without traffic, so the next visit can take
-about a minute. Neon can also suspend idle database compute and wake on demand.
-Both have free-tier quotas; neither free plan is an always-on production SLA.
-See [Render limits](https://render.com/docs/free) and [Neon pricing](https://neon.com/pricing).
+Registration, sign-in, and sign-out are available. Email verification, password recovery, and account/product deletion are not implemented yet. Phones and laptops save details but do not produce price estimates.
 
 ## Verification and rollback
 
-After a deployment, check home, About, registration/sign-in, saving both product
-categories, private collection access, `/healthz`, and one live car search from
-Render's network. Do not treat an upstream source outage as fabricated inventory.
+After changes, verify public pages, registration/sign-in, saving both categories, private collection access, the deployed revision, and a real car search. Local tests use temporary SQLite databases and mocked source HTML; they do not validate Neon connectivity or current source availability. Production account persistence and live car search were separately verified for the initial account release.
 
-If a release fails, use Render's previous successful deploy to roll back the web
-service, then revert the problematic change through a PR to `main`. A rollback
-does not undo database writes or schema changes. Confirm auto-deploy remains
-**After CI Checks Pass** before resuming normal merges.
+A failed Render build leaves the previous release running. For a bad application release, roll back to a known successful deployment in Render, then revert the change through a PR. A web rollback does not undo database writes or migrations. Avoid merging another release while investigating a rollback.
+
+Gitleaks scans changes in CI. For a local history audit:
+
+```bash
+gitleaks git . --log-opts='--all' --redact=100
+```
+
+If a credential is committed, rotate it first, then remove it from branch/tag history. History rewriting cannot retract existing clones, forks, or GitHub’s retained pull-request views; GitHub Support may be needed for server-side cleanup. Never post an exposed secret in the cleanup report.
+
+## Free-tier behavior
+
+Render can sleep after inactivity, so the first request may take around a minute. Neon can also suspend and resume idle database compute. Both services impose quotas; free plans do not provide an always-on production guarantee. See [Render Free](https://render.com/docs/free) and [Neon plans](https://neon.com/pricing).
+
+Car results are a first-page sample, cached for five minutes with the original check time. The source may include nearby locations; the app shows asking prices, not completed sales. Upstream layout changes or outages produce an explicit unavailable state.
 
 ## Local development
 
@@ -119,7 +78,4 @@ python3.11 -m venv .venv
 .venv/bin/python public_app.py
 ```
 
-Open `http://127.0.0.1:5002`. Local accounts use `instance/accounts.db` unless
-`DATABASE_URL` is set. The test suite uses temporary isolated databases; it does
-not need Neon credentials. The hosted app requires both `DATABASE_URL` and
-`SECRET_KEY`. Use the old Docker Compose stack only for research-pipeline work.
+Open `http://127.0.0.1:5002`. Local accounts use the ignored `instance/accounts.db` unless `DATABASE_URL` is set. Use the research Docker Compose stack only when working on the separate pipeline.
