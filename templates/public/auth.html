@@ -1,0 +1,18 @@
+{% extends 'public/base.html' %}
+{% block title %}{{ 'Create an account' if mode == 'register' else 'Sign in' }} · PriceScout{% endblock %}
+{% block content %}
+<section class="account-layout">
+  <div class="account-intro"><p class="eyebrow">A HOME FOR YOUR EVERYDAY THINGS</p><h1>{{ 'Make room for' if mode == 'register' else 'Good to have' }}<br>{{ 'a clearer view.' if mode == 'register' else 'you back.' }}</h1><p class="lede">Save your phones and laptops in a private collection.<br>Your product details stay here for your next visit.</p><p class="quiet-note">Car price searches are always available without an account.</p></div>
+  <div class="search-panel auth-panel"><h2>{{ 'Create your account' if mode == 'register' else 'Sign in to PriceScout' }}</h2>
+    {% if error %}<p class="form-error" role="alert">{{ error }}</p>{% endif %}
+    <form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      {% if mode == 'register' %}<label>Your name<input name="name" required maxlength="80" autocomplete="name" value="{{ request.form.get('name', '') }}"></label>{% else %}<input type="hidden" name="next" value="{{ next_page }}">{% endif %}
+      <label>Email address<input type="email" name="email" required maxlength="254" autocomplete="email" value="{{ request.form.get('email', '') }}"></label>
+      <label>Password<input type="password" name="password" required {% if mode == 'register' %}minlength="10"{% endif %} maxlength="128" autocomplete="{{ 'new-password' if mode == 'register' else 'current-password' }}"></label>
+      {% if mode == 'register' %}<p class="hint">At least 10 characters. A longer passphrase works well.</p>{% endif %}
+      <button type="submit">{{ 'Create account' if mode == 'register' else 'Sign in' }} <span aria-hidden="true">↗</span></button>
+    </form>
+    <p class="auth-switch">{% if mode == 'register' %}Already have an account? <a href="/userdata/login">Sign in</a>{% else %}New here? <a href="/userdata/register">Create an account</a>{% endif %}</p>
+  </div>
+</section>
+{% endblock %}

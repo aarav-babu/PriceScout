@@ -1,0 +1,7 @@
+{% extends 'public/base.html' %}
+{% block title %}{{ product.brand }} {{ product.model }} · PriceScout{% endblock %}
+{% block content %}
+<section class="intro compact-intro"><a class="back-link" href="/userdata/userprofile">← My collection</a><p class="eyebrow">{{ categories[product.category]|upper }} / SAVED PRODUCT</p><h1>{{ product.brand }}<br>{{ product.model }}</h1><p class="quiet-note">Saved {{ product.created_at.strftime('%d %b %Y') }}</p></section>
+<section class="search-panel detail-panel"><h2>Product details</h2><dl class="detail-grid">{% for key, label in [('condition', 'Condition'), ('age', 'Age'), ('ram', 'RAM'), ('storage', 'Storage'), ('processor', 'Processor')] %}{% if details.get(key) %}<div><dt>{{ label }}</dt><dd>{{ details[key] }}</dd></div>{% endif %}{% endfor %}</dl>{% if details.description %}<h3>Your notes</h3><p class="product-notes">{{ details.description }}</p>{% endif %}</section>
+<section class="pricing-status"><span class="status-pill muted-pill">Pricing unavailable</span><h2>Your details are saved.</h2><p>We don’t have a live price source for {{ 'phones' if product.category == 'mobiles' else 'laptops' }} yet. No estimate has been generated for this item.</p><a href="/products">Add another product ↗</a></section>
+{% endblock %}

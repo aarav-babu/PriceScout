@@ -1,0 +1,8 @@
+{% extends 'public/base.html' %}
+{% block title %}My collection · PriceScout{% endblock %}
+{% block content %}
+<section class="intro"><p class="eyebrow">YOUR PRIVATE COLLECTION</p><h1>A little more<br>organized, {{ user.name }}.</h1><p class="lede">Your saved products, ready whenever you are.</p><p class="quiet-note">Signed in as {{ user.email }}</p></section>
+<div class="collection-heading"><h2>{{ items|length }} saved {{ 'product' if items|length == 1 else 'products' }}</h2><a class="button-link" href="/products">Add a product ↗</a></div>
+{% if items %}<div class="collection-list">{% for item in items %}<a class="collection-item" href="{{ url_for('accounts.product_detail', product_id=item.id) }}"><span class="step">{{ categories[item.category]|upper }}</span><div><h3>{{ item.brand }} {{ item.model }}</h3><p>Saved {{ item.created_at.strftime('%d %b %Y') }} · Pricing unavailable</p></div><span aria-hidden="true">↗</span></a>{% endfor %}</div>
+{% else %}<section class="empty-state"><h2>Your collection starts with one thing.</h2><p>Add a phone or laptop to keep its details together.</p><a href="/products">Choose your first product ↗</a></section>{% endif %}
+{% endblock %}

@@ -1,5 +1,21 @@
 # PriceScout
 
+## Live public site
+
+[Open PriceScout](https://pricescout-urwq.onrender.com/).
+
+The public app uses `public_app:app` with `requirements-public.txt`. It includes
+live used-car asking prices in India, sign-in and registration, About/Contact
+pages, and private saved phone/laptop entries. Phone and laptop pricing is not
+yet available. Accounts and saved products persist in Neon PostgreSQL.
+
+Open a pull request against `main` to change the site. GitHub Actions runs the
+test suite and a production startup check; Render deploys `main` after its checks
+pass. See [DEPLOYMENT.md](DEPLOYMENT.md) for setup, configuration, and rollback.
+
+The MySQL/Celery/ML application documented below is the separate research
+pipeline. It remains in the repository but is not the public Render entry point.
+
 PriceScout is a Flask app that estimates resale prices for vehicles, mobile
 phones, and laptops. It stores accounts and valuations in MySQL/MariaDB and
 uses an asynchronous market-data and model-training pipeline for hosted use.
